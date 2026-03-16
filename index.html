@@ -1073,7 +1073,7 @@ console.log('🔥 Firebase hazır — mihrab-harita-227f9');
 <script>
 function sanitize(str){
   if(!str||typeof str!=='string')return'';
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/[\\]/g,'&#x2F;').trim().slice(0,200);
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/\\/g,'&#x2F;').trim().slice(0,200);
 }
 function sanitizeInput(el){
   if(!el)return'';
@@ -4246,7 +4246,7 @@ async function googlePlacesDogrula(lat, lng) {
   
   el.className = 'google-dogrulama gorune yukleniyor';
   ikon.textContent = '⏳';
-  text.textContent = "Google Maps'te yakindaki cami araniyor...";
+  text.textContent = "Yakindaki camiler aranıyor...";
   
   // Firebase yapılandırılana kadar simülasyon (gerçek API'ye geçiş için hazır)
   // Gerçek implementasyon: Google Places Nearby Search API
