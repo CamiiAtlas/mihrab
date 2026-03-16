@@ -2,8 +2,6 @@
 <html lang="tr" dir="ltr">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' 'unsafe-inline' https://unpkg.com https://fonts.googleapis.com https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https:;">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MIHRÂB — Cami İz Haritam</title>
 <meta name="description" content="İstanbul camilerini keşfedin, ziyaretlerinizi kaydedin, seri oluşturun.">
@@ -24,143 +22,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
-<script>
 
-// ════════════════════════════════════════════════════════════
-//  MIHRÂB PRODUCTION — GÜVENLİK & YARDIMCI KATMANI
-// ════════════════════════════════════════════════════════════
-
-// ─── XSS Koruması ───
-function sanitize(str) {
-  if (!str || typeof str !== 'string') return '';
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
-    .replace(/\/g, '&#x2F;')
-    .trim()
-    .slice(0, 200); // max uzunluk
-}
-
-function sanitizeInput(el) {
-  if (!el) return '';
-  el.value = el.value.replace(/[<>]/g, '');
-  return el.value.trim();
-}
-
-// ─── Rate Limiting ───
-const _rateLimiter = {};
-function rateLimit(key, maxPerMinute) {
-  const now = Date.now();
-  if (!_rateLimiter[key]) _rateLimiter[key] = [];
-  _rateLimiter[key] = _rateLimiter[key].filter(t => now - t < 60000);
-  if (_rateLimiter[key].length >= maxPerMinute) {
-    showToast('Çok hızlı! Lütfen bekleyin.', 'warn');
-    return false;
-  }
-  _rateLimiter[key].push(now);
-  return true;
-}
-
-// ─── Throttle ───
-function throttle(fn, ms) {
-  let last = 0;
-  return function(...args) {
-    const now = Date.now();
-    if (now - last >= ms) { last = now; return fn.apply(this, args); }
-  };
-}
-
-// ─── localStorage güvenli erişim ───
-const store = {
-  get(key, fallback = null) {
-    try {
-      const v = localStorage.getItem('mihrab_' + key);
-      return v !== null ? JSON.parse(v) : fallback;
-    } catch { return fallback; }
-  },
-  set(key, value) {
-    try { localStorage.setItem('mihrab_' + key, JSON.stringify(value)); return true; }
-    catch (e) { console.warn('Storage full:', e); return false; }
-  },
-  remove(key) {
-    try { localStorage.removeItem('mihrab_' + key); } catch {}
-  }
-};
-
-// ─── Toast Bildirim Sistemi ───
-let _toastTimer = null;
-function showToast(msg, type = 'info', duration = 3000) {
-  let toast = document.getElementById('mihrabToast');
-  if (!toast) {
-    toast = document.createElement('div');
-    toast.id = 'mihrabToast';
-    toast.style.cssText = `
-      position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);
-      padding:11px 20px;border-radius:20px;font-size:13px;font-weight:600;
-      z-index:9999;opacity:0;transition:all 0.3s ease;white-space:nowrap;
-      max-width:90vw;text-align:center;pointer-events:none;
-      font-family:'Nunito',sans-serif;
-    `;
-    document.body.appendChild(toast);
-  }
-  const styles = {
-    info:    { bg: 'rgba(26,21,8,0.95)', border: 'rgba(240,208,96,0.4)', color: '#F0D060' },
-    success: { bg: 'rgba(20,60,30,0.95)', border: 'rgba(80,200,120,0.5)', color: '#50C878' },
-    warn:    { bg: 'rgba(60,40,10,0.95)', border: 'rgba(240,160,50,0.5)', color: '#F0A030' },
-    error:   { bg: 'rgba(60,20,20,0.95)', border: 'rgba(220,80,80,0.5)', color: '#FF6060' },
-  };
-  const s = styles[type] || styles.info;
-  toast.style.background = s.bg;
-  toast.style.border = '1px solid ' + s.border;
-  toast.style.color = s.color;
-  toast.textContent = msg;
-  toast.style.opacity = '1';
-  toast.style.transform = 'translateX(-50%) translateY(0)';
-  if (_toastTimer) clearTimeout(_toastTimer);
-  _toastTimer = setTimeout(() => {
-    toast.style.opacity = '0';
-    toast.style.transform = 'translateX(-50%) translateY(20px)';
-  }, duration);
-}
-
-// ─── Error Handler ───
-window.onerror = function(msg, src, line, col, err) {
-  // Production'da Sentry'ye gider, şimdilik logla
-  console.error('MIHRÂB Error:', msg, 'Line:', line);
-  // Kullanıcıya gösterme — sadece kritik hatalar
-  return true; // default handler'ı engelle
-};
-
-window.onunhandledrejection = function(e) {
-  console.error('MIHRÂB Unhandled Promise:', e.reason);
-};
-
-// ─── Analytics stub (Firebase bağlandığında gerçek olacak) ───
-const analytics = {
-  _queue: [],
-  log(event, params = {}) {
-    const entry = { event, params, ts: Date.now() };
-    this._queue.push(entry);
-    // Firebase bağlandığında: window.firebaseAnalytics?.logEvent(event, params);
-    if (this._queue.length > 100) this._queue.shift(); // bellek sınırı
-    // console.log('📊 Analytics:', event, params);
-  }
-};
-
-// ─── Kullanıcı ID (anonim, Firebase öncesi) ───
-function getUserId() {
-  let uid = store.get('uid');
-  if (!uid) {
-    uid = 'anon_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
-    store.set('uid', uid);
-  }
-  return uid;
-}
-
-</script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <style>
@@ -1206,6 +1068,44 @@ window.firestoreZiyaretKaydet=async function(camiId,vakit){
 signInAnonymously(auth).catch(function(){});
 window.fbLog=function(e,p){try{logEvent(fba,e,p||{});}catch(x){}};
 console.log('🔥 Firebase hazır — mihrab-harita-227f9');
+</script>
+
+<script>
+function sanitize(str){
+  if(!str||typeof str!=='string')return'';
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/[\\]/g,'&#x2F;').trim().slice(0,200);
+}
+function sanitizeInput(el){
+  if(!el)return'';
+  el.value=el.value.replace(/[<>]/g,'');
+  return el.value.trim();
+}
+function rateLimit(key,max){
+  var now=Date.now();
+  window._rl=window._rl||{};
+  window._rl[key]=( window._rl[key]||[]).filter(function(t){return now-t<60000;});
+  if(window._rl[key].length>=max)return false;
+  window._rl[key].push(now);
+  return true;
+}
+function showToast(msg,type,dur){
+  var t=document.getElementById('mihrabToast');
+  if(!t){t=document.createElement('div');t.id='mihrabToast';t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);padding:11px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:9999;opacity:0;transition:all 0.3s;pointer-events:none;background:rgba(26,21,8,.95);border:1px solid rgba(240,208,96,.4);color:#F0D060;';document.body&&document.body.appendChild(t);}
+  t.textContent=msg;t.style.opacity='1';t.style.transform='translateX(-50%) translateY(0)';
+  clearTimeout(window._tt);window._tt=setTimeout(function(){t.style.opacity='0';},dur||3000);
+}
+var store={
+  get:function(k,fb){try{var v=localStorage.getItem('mihrab_'+k);return v!==null?JSON.parse(v):fb||null;}catch(e){return fb||null;}},
+  set:function(k,v){try{localStorage.setItem('mihrab_'+k,JSON.stringify(v));return true;}catch(e){return false;}},
+  remove:function(k){try{localStorage.removeItem('mihrab_'+k);}catch(e){}}
+};
+function getUserId(){var uid=store.get('uid');if(!uid){uid='anon_'+Date.now()+'_'+Math.random().toString(36).slice(2,8);store.set('uid',uid);}return uid;}
+window.sanitize=sanitize;
+window.sanitizeInput=sanitizeInput;
+window.rateLimit=rateLimit;
+window.showToast=showToast;
+window.store=store;
+window.getUserId=getUserId;
 </script>
 </head>
 <body>
@@ -4346,7 +4246,7 @@ async function googlePlacesDogrula(lat, lng) {
   
   el.className = 'google-dogrulama gorune yukleniyor';
   ikon.textContent = '⏳';
-  text.textContent = 'Google Maps'te yakındaki cami aranıyor...';
+  text.textContent = "Google Maps'te yakindaki cami araniyor...";
   
   // Firebase yapılandırılana kadar simülasyon (gerçek API'ye geçiş için hazır)
   // Gerçek implementasyon: Google Places Nearby Search API
