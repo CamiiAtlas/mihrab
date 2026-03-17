@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MIHRÂB — Admin Panel</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#0A0A0F; color:#fff; font-family:'Segoe UI',sans-serif; min-height:100vh; }
+
+/* Login */
+#loginScreen {
+  display:flex; align-items:center; justify-content:center;
+  min-height:100vh; flex-direction:column; gap:20px;
+}
+.login-box {
+  background:#111118; border:1px solid rgba(240,208,96,.2);
+  border-radius:16px; padding:32px; width:320px; text-align:center;
+}
+.login-box h2 { color:#F0D060; font-size:20px; margin-bottom:4px; }
+.login-box p { color:rgba(255,255,255,.4); font-size:13px; margin-bottom:24px; }
+.login-input {
+  width:100%; padding:12px 14px; background:rgba(255,255,255,.06);
+  border:1px solid rgba(240,208,96,.2); border-radius:10px;
+  color:#fff; font-size:14px; outline:none; margin-bottom:10px;
+}
+.btn-login {
+  width:100%; padding:13px; background:linear-gradient(135deg,#F0D060,#C8A830);
+  color:#0D0A04; border:none; border-radius:10px; font-size:15px;
+  font-weight:700; cursor:pointer;
+}
+.login-error { color:#FF6060; font-size:12px; margin-top:8px; display:none; }
+
+/* Dashboard */
+#dashboard { display:none; padding:24px; max-width:1200px; margin:0 auto; }
+.dash-header {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:28px; padding-bottom:16px;
+  border-bottom:1px solid rgba(240,208,96,.15);
+}
+.dash-header h1 { color:#F0D060; font-size:22px; }
+.dash-header span { color:rgba(255,255,255,.4); font-size:13px; }
+.btn-cikis {
+  background:rgba(220,60,60,.1); border:1px solid rgba(220,60,60,.2);
+  color:rgba(255,100,100,.8); padding:7px 14px; border-radius:8px;
+  cursor:pointer; font-size:13px;
+}
+
+/* İstatistik kartları */
+.stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:28px; }
+.stat-kart {
+  background:#111118; border:1px solid rgba(240,208,96,.12);
+  border-radius:14px; padding:18px;
+}
+.stat-kart .sk-sayi { font-size:32px; font-weight:800; color:#F0D060; }
+.stat-kart .sk-label { font-size:12px; color:rgba(255,255,255,.4); margin-top:4px; }
+.stat-kart .sk-delta { font-size:11px; color:#50C878; margin-top:2px; }
+
+/* Tablo */
+.tablo-wrap { background:#111118; border:1px solid rgba(255,255,255,.06); border-radius:14px; overflow:hidden; margin-bottom:24px; }
+.tablo-baslik { padding:14px 18px; border-bottom:1px solid rgba(255,255,255,.06); display:flex; align-items:center; justify-content:space-between; }
+.tablo-baslik h3 { font-size:14px; color:#F0D060; }
+.tablo-filtre { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:8px; padding:6px 12px; color:#fff; font-size:12px; outline:none; }
+table { width:100%; border-collapse:collapse; }
+th { padding:10px 16px; text-align:left; font-size:11px; color:rgba(255,255,255,.4); text-transform:uppercase; letter-spacing:.5px; border-bottom:1px solid rgba(255,255,255,.06); }
+td { padding:12px 16px; font-size:13px; border-bottom:1px solid rgba(255,255,255,.04); }
+tr:hover td { background:rgba(255,255,255,.02); }
+.badge { display:inline-block; padding:3px 9px; border-radius:10px; font-size:11px; font-weight:600; }
+.badge-google { background:rgba(66,133,244,.15); color:#4285F4; }
+.badge-anon { background:rgba(255,255,255,.08); color:rgba(255,255,255,.5); }
+.badge-aktif { background:rgba(80,200,120,.15); color:#50C878; }
+
+/* Yükleniyor */
+.loading { text-align:center; padding:40px; color:rgba(255,255,255,.3); font-size:14px; }
+.refresh-btn { background:rgba(240,208,96,.08); border:1px solid rgba(240,208,96,.2); color:#F0D060; padding:7px 14px; border-radius:8px; cursor:pointer; font-size:12px; }
+
+/* Grafik alanı */
+.chart-wrap { background:#111118; border:1px solid rgba(255,255,255,.06); border-radius:14px; padding:18px; margin-bottom:24px; }
+.chart-bars { display:flex; align-items:flex-end; gap:6px; height:120px; }
+.chart-bar { flex:1; background:rgba(240,208,96,.15); border-radius:4px 4px 0 0; position:relative; cursor:pointer; transition:background .2s; min-width:20px; }
+.chart-bar:hover { background:rgba(240,208,96,.35); }
+.chart-bar span { position:absolute; bottom:-18px; left:50%; transform:translateX(-50%); font-size:9px; color:rgba(255,255,255,.3); white-space:nowrap; }
+</style>
+</head>
+<body>
+
+<!-- GİRİŞ EKRANI -->
+<div id="loginScreen">
+  <div style="color:#F0D060;font-size:28px;font-weight:800;letter-spacing:4px;margin-bottom:8px;">MIHRÂB</div>
+  <div style="color:rgba(240,208,96,.4);font-size:11px;letter-spacing:6px;margin-bottom:32px;">ADMIN PANEL</div>
+  <div class="login-box">
+    <h2>Giriş Yap</h2>
+    <p>Admin erişimi için şifrenizi girin</p>
+    <input type="password" id="adminSifre" class="login-input" placeholder="Admin şifresi" onkeydown="if(event.key==='Enter')adminGiris()">
+    <button class="btn-login" onclick="adminGiris()">Giriş</button>
+    <div class="login-error" id="loginError">Yanlış şifre</div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <div class="dash-header">
+    <div>
+      <h1>🕌 MIHRÂB Admin</h1>
+      <span id="sonGuncelleme">Yükleniyor...</span>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <button class="refresh-btn" onclick="verileriYukle()">🔄 Yenile</button>
+      <button class="btn-cikis" onclick="adminCikis()">Çıkış</button>
+    </div>
+  </div>
+
+  <!-- İSTATİSTİK KARTLARI -->
+  <div class="stat-grid">
+    <div class="stat-kart">
+      <div class="sk-sayi" id="toplamKullanici">—</div>
+      <div class="sk-label">Toplam Kullanıcı</div>
+      <div class="sk-delta" id="bugunKullanici">— bugün</div>
+    </div>
+    <div class="stat-kart">
+      <div class="sk-sayi" id="toplamZiyaret">—</div>
+      <div class="sk-label">Toplam Ziyaret</div>
+      <div class="sk-delta" id="bugunZiyaret">— bugün</div>
+    </div>
+    <div class="stat-kart">
+      <div class="sk-sayi" id="googleKullanici">—</div>
+      <div class="sk-label">Google ile Giriş</div>
+      <div class="sk-delta" id="anonKullanici">— misafir</div>
+    </div>
+    <div class="stat-kart">
+      <div class="sk-sayi" id="toplamCamiOneri">—</div>
+      <div class="sk-label">Cami Önerisi</div>
+      <div class="sk-delta" id="bekleyenOneri">— bekleyen</div>
+    </div>
+    <div class="stat-kart">
+      <div class="sk-sayi" id="toplamDua">—</div>
+      <div class="sk-label">Dua Kaydı</div>
+    </div>
+    <div class="stat-kart">
+      <div class="sk-sayi" id="aktifStreak">—</div>
+      <div class="sk-label">Aktif Streak (3+ gün)</div>
+    </div>
+  </div>
+
+  <!-- KULLANICI TABLOSU -->
+  <div class="tablo-wrap">
+    <div class="tablo-baslik">
+      <h3>👥 Kullanıcılar</h3>
+      <select class="tablo-filtre" id="kullaniciFiltre" onchange="kullaniclariFiltrele()">
+        <option value="all">Tümü</option>
+        <option value="google">Google</option>
+        <option value="anon">Misafir</option>
+      </select>
+    </div>
+    <div id="kullaniciTablosu"><div class="loading">Yükleniyor...</div></div>
+  </div>
+
+  <!-- ZİYARET TABLOSU -->
+  <div class="tablo-wrap">
+    <div class="tablo-baslik">
+      <h3>📍 Son Ziyaretler</h3>
+    </div>
+    <div id="ziyaretTablosu"><div class="loading">Yükleniyor...</div></div>
+  </div>
+
+  <!-- CAMİ ÖNERİ MODERASYONu -->
+  <div class="tablo-wrap">
+    <div class="tablo-baslik">
+      <h3>🏗️ Bekleyen Cami Önerileri</h3>
+    </div>
+    <div id="oneriTablosu"><div class="loading">Yükleniyor...</div></div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, getDocs, query, orderBy, limit, where, updateDoc, deleteDoc }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBHMRw66oLG75WO0nRe3UWUcF091KS7ges",
+  authDomain: "mihrab-harita-227f9.firebaseapp.com",
+  projectId: "mihrab-harita-227f9",
+  storageBucket: "mihrab-harita-227f9.firebasestorage.app",
+  messagingSenderId: "1084322585116",
+  appId: "1:1084322585116:web:4c8cc91dc708dcd49eddd9"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// ─── Admin Şifresi (bunu değiştirin) ───
+const ADMIN_SIFRE = "mihrab2025admin";
+
+window.adminGiris = function() {
+  const sifre = document.getElementById('adminSifre').value;
+  if (sifre === ADMIN_SIFRE) {
+    sessionStorage.setItem('mihrab_admin', '1');
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    verileriYukle();
+  } else {
+    document.getElementById('loginError').style.display = 'block';
+  }
+};
+
+window.adminCikis = function() {
+  sessionStorage.removeItem('mihrab_admin');
+  location.reload();
+};
+
+// Sayfa yüklenince oturum kontrol
+if (sessionStorage.getItem('mihrab_admin')) {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  verileriYukle();
+}
+
+// ─── VERİLERİ YÜKLE ───
+window.verileriYukle = async function() {
+  document.getElementById('sonGuncelleme').textContent = 
+    'Son güncelleme: ' + new Date().toLocaleTimeString('tr-TR');
+  
+  await Promise.all([
+    kullaniclariYukle(),
+    ziyaretleriYukle(),
+    oneriYukle(),
+  ]);
+};
+
+// Kullanıcılar
+let tumKullanicilar = [];
+async function kullaniclariYukle() {
+  try {
+    const snap = await getDocs(query(collection(db, 'users'), orderBy('kayitTarihi', 'desc'), limit(200)));
+    tumKullanicilar = snap.docs.map(d => ({id: d.id, ...d.data()}));
+    
+    // İstatistikler
+    const bugun = new Date(); bugun.setHours(0,0,0,0);
+    const bugunKayit = tumKullanicilar.filter(u => u.kayitTarihi?.seconds * 1000 > bugun).length;
+    const googleler = tumKullanicilar.filter(u => !u.isAnonymous).length;
+    const anonlar = tumKullanicilar.filter(u => u.isAnonymous).length;
+    
+    document.getElementById('toplamKullanici').textContent = tumKullanicilar.length;
+    document.getElementById('bugunKullanici').textContent = '+' + bugunKayit + ' bugün';
+    document.getElementById('googleKullanici').textContent = googleler;
+    document.getElementById('anonKullanici').textContent = anonlar + ' misafir';
+    
+    kullaniclariFiltrele();
+  } catch(e) {
+    document.getElementById('kullaniciTablosu').innerHTML = 
+      '<div class="loading">Veri yüklenemedi — Firestore rules kontrol edin</div>';
+  }
+}
+
+window.kullaniclariFiltrele = function() {
+  const filtre = document.getElementById('kullaniciFiltre').value;
+  let liste = tumKullanicilar;
+  if (filtre === 'google') liste = liste.filter(u => !u.isAnonymous);
+  if (filtre === 'anon') liste = liste.filter(u => u.isAnonymous);
+  
+  if (liste.length === 0) {
+    document.getElementById('kullaniciTablosu').innerHTML = '<div class="loading">Kullanıcı yok</div>';
+    return;
+  }
+  
+  document.getElementById('kullaniciTablosu').innerHTML = `
+    <table>
+      <thead><tr>
+        <th>#</th><th>Nickname</th><th>Giriş Tipi</th>
+        <th>Cihaz</th><th>Ziyaret</th><th>Kayıt Tarihi</th>
+      </tr></thead>
+      <tbody>${liste.map((u, i) => `
+        <tr>
+          <td style="color:rgba(255,255,255,.3)">${i+1}</td>
+          <td style="font-weight:600">${u.displayName || u.nickname || '—'}</td>
+          <td><span class="badge ${u.isAnonymous ? 'badge-anon' : 'badge-google'}">${u.isAnonymous ? '👻 Misafir' : '🔵 Google'}</span></td>
+          <td style="color:rgba(255,255,255,.5);font-size:12px">${u.platform || '—'}</td>
+          <td style="color:#F0D060;font-weight:700">${u.ziyaretSayisi || 0}</td>
+          <td style="color:rgba(255,255,255,.4);font-size:12px">${u.kayitTarihi ? new Date(u.kayitTarihi.seconds*1000).toLocaleDateString('tr-TR') : '—'}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+};
+
+// Ziyaretler
+async function ziyaretleriYukle() {
+  try {
+    const snap = await getDocs(query(collection(db, 'visits'), orderBy('tarih', 'desc'), limit(50)));
+    const ziyaretler = snap.docs.map(d => ({id: d.id, ...d.data()}));
+    
+    const bugun = new Date(); bugun.setHours(0,0,0,0);
+    const bugunZ = ziyaretler.filter(z => z.tarih?.seconds * 1000 > bugun).length;
+    document.getElementById('toplamZiyaret').textContent = snap.size;
+    document.getElementById('bugunZiyaret').textContent = '+' + bugunZ + ' bugün';
+    
+    document.getElementById('ziyaretTablosu').innerHTML = `
+      <table>
+        <thead><tr><th>Cami ID</th><th>Vakit</th><th>Kullanıcı</th><th>Tarih</th></tr></thead>
+        <tbody>${ziyaretler.map(z => `
+          <tr>
+            <td style="color:#F0D060">Cami #${z.camiId || '?'}</td>
+            <td>${z.vakit || '—'}</td>
+            <td style="color:rgba(255,255,255,.5);font-size:11px">${(z.userId||'').substring(0,12)}...</td>
+            <td style="color:rgba(255,255,255,.4);font-size:12px">${z.tarih ? new Date(z.tarih.seconds*1000).toLocaleString('tr-TR') : '—'}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`;
+  } catch(e) {
+    document.getElementById('ziyaretTablosu').innerHTML = '<div class="loading">Veri yüklenemedi</div>';
+  }
+}
+
+// Cami önerileri moderasyonu
+async function oneriYukle() {
+  try {
+    const snap = await getDocs(query(collection(db, 'cami_onerileri'), orderBy('olusturma', 'desc'), limit(50)));
+    const oneriler = snap.docs.map(d => ({id: d.id, ...d.data()}));
+    
+    const bekleyenler = oneriler.filter(o => o.durum === 'beklemede').length;
+    document.getElementById('toplamCamiOneri').textContent = oneriler.length;
+    document.getElementById('bekleyenOneri').textContent = bekleyenler + ' bekleyen';
+    
+    if (oneriler.length === 0) {
+      document.getElementById('oneriTablosu').innerHTML = '<div class="loading">Öneri yok</div>';
+      return;
+    }
+    
+    document.getElementById('oneriTablosu').innerHTML = `
+      <table>
+        <thead><tr><th>Cami Adı</th><th>Koordinat</th><th>Onay</th><th>Durum</th><th>İşlem</th></tr></thead>
+        <tbody>${oneriler.map(o => `
+          <tr>
+            <td style="font-weight:600">${o.name || o.camiAdi || '—'}</td>
+            <td style="color:rgba(255,255,255,.4);font-size:11px">${o.lat ? o.lat.toFixed(4)+', '+o.lng.toFixed(4) : '—'}</td>
+            <td style="color:#F0D060">${o.onaylar || 0}/3</td>
+            <td><span class="badge ${o.durum==='onaylandi'?'badge-aktif':'badge-anon'}">${o.durum==='onaylandi'?'✅ Onaylı':'⏳ Bekliyor'}</span></td>
+            <td>
+              ${o.durum !== 'onaylandi' ? `<button onclick="oneriOnayla('${o.id}')" style="background:rgba(80,200,120,.1);border:1px solid rgba(80,200,120,.3);color:#50C878;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px;margin-right:4px">Onayla</button>` : ''}
+              <button onclick="oneriSil('${o.id}')" style="background:rgba(220,60,60,.1);border:1px solid rgba(220,60,60,.2);color:#FF6060;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px">Sil</button>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`;
+  } catch(e) {
+    document.getElementById('oneriTablosu').innerHTML = '<div class="loading">Veri yüklenemedi</div>';
+  }
+}
+
+window.oneriOnayla = async function(id) {
+  try {
+    await updateDoc(collection(db, 'cami_onerileri').doc ? 
+      (await getDocs(query(collection(db,'cami_onerileri'),where('__name__','==',id)))).docs[0].ref :
+      {}, { durum: 'onaylandi', onaylar: 3 });
+    verileriYukle();
+  } catch(e) { alert('Hata: ' + e.message); }
+};
+
+window.oneriSil = async function(id) {
+  if (!confirm('Bu öneriyi silmek istediğinizden emin misiniz?')) return;
+  try {
+    const snap = await getDocs(query(collection(db,'cami_onerileri'), where('__name__','==',id)));
+    if (!snap.empty) await deleteDoc(snap.docs[0].ref);
+    verileriYukle();
+  } catch(e) { alert('Hata: ' + e.message); }
+};
+
+// Dua sayısı
+getDocs(collection(db, 'dualar')).then(s => {
+  document.getElementById('toplamDua').textContent = s.size;
+}).catch(() => {});
+</script>
+</body>
+</html>

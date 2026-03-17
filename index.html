@@ -5961,6 +5961,132 @@ window.camiOnerGonder = function() {
   setTimeout(obCamiSayacGuncelle, 500);
 };
 
+
+// ════════════════════════════════════════════════
+//  KULLANICI PROFİL & NİCKNAME SİSTEMİ
+// ════════════════════════════════════════════════
+
+// Nickname benzersizlik kontrolü (Firestore)
+async function nicknameMusait(nickname) {
+  if (!window.db || !window.fbStore) return true; // offline fallback
+  try {
+    const { collection, query, where, getDocs } = window.fbStore;
+    const q = query(collection(window.db, 'users'), where('nickname', '==', nickname.toLowerCase()));
+    const snap = await getDocs(q);
+    return snap.empty; // boşsa musait
+  } catch(e) { return true; }
+}
+
+// Kullanıcı profilini Firestore'a kaydet/güncelle
+async function profilKaydet(nickname, displayName) {
+  if (!window.db || !window.currentUser) return;
+  try {
+    const { collection, query, where, getDocs, addDoc, updateDoc, serverTimestamp } = window.fbStore;
+    const uid = window.currentUser.uid;
+    
+    // Mevcut profil var mı?
+    const q = query(collection(window.db, 'users'), where('uid', '==', uid));
+    const snap = await getDocs(q);
+    
+    const profilVeri = {
+      uid: uid,
+      nickname: nickname.toLowerCase(),
+      displayName: displayName || nickname,
+      email: window.currentUser.email || null,
+      isAnonymous: window.currentUser.isAnonymous || false,
+      platform: /iPhone|iPad|Android/.test(navigator.userAgent) ? 'mobile' : 'desktop',
+      guncelleme: serverTimestamp(),
+    };
+    
+    if (snap.empty) {
+      // Yeni profil
+      profilVeri.kayitTarihi = serverTimestamp();
+      profilVeri.ziyaretSayisi = 0;
+      await addDoc(collection(window.db, 'users'), profilVeri);
+    } else {
+      // Güncelle
+      await updateDoc(snap.docs[0].ref, {
+        displayName: profilVeri.displayName,
+        guncelleme: profilVeri.guncelleme,
+      });
+    }
+    console.log('✅ Profil kaydedildi:', nickname);
+  } catch(e) { console.warn('Profil kayıt hatası:', e); }
+}
+
+// Ziyaret sayısını Firestore'da güncelle
+async function ziyaretSayisiGuncelle() {
+  if (!window.db || !window.currentUser) return;
+  try {
+    const { collection, query, where, getDocs, updateDoc, increment } = window.fbStore;
+    const uid = window.currentUser.uid;
+    const q = query(collection(window.db, 'users'), where('uid', '==', uid));
+    const snap = await getDocs(q);
+    if (!snap.empty) {
+      // Firestore'da increment yok (compat değil) - manuel say
+      const ziyaretler = JSON.parse(localStorage.getItem('ziyaretler') || '{}');
+      let toplam = 0;
+      Object.values(ziyaretler).forEach(arr => { toplam += arr.length; });
+      await updateDoc(snap.docs[0].ref, { ziyaretSayisi: toplam });
+    }
+  } catch(e) {}
+}
+
+// Onboarding isim kaydetme fonksiyonunu güçlendir
+async function obIsimKaydetGelismis() {
+  var input = document.getElementById('obIsimInput');
+  var isim = input ? input.value.replace(/[<>]/g, '').trim() : '';
+  
+  if (!isim) { obSonraki(3); return; }
+  
+  if (isim.length < 3) {
+    showToast('En az 3 karakter olmalı', 'warn'); return;
+  }
+  
+  // Yükleniyor göster
+  var btn = document.querySelector('#obStep2 .btn-ob-next');
+  if (btn) { btn.textContent = 'Kontrol ediliyor...'; btn.disabled = true; }
+  
+  // Benzersizlik kontrolü
+  var musait = await nicknameMusait(isim);
+  
+  if (!musait) {
+    showToast('Bu isim alınmış, başka bir isim deneyin 🔄', 'warn', 4000);
+    if (btn) { btn.textContent = 'Devam →'; btn.disabled = false; }
+    return;
+  }
+  
+  // Kaydet
+  localStorage.setItem('kullaniciAdi', isim);
+  store.set('kullaniciAdi', isim);
+  
+  // Firestore'a profil kaydet
+  await profilKaydet(isim, isim);
+  
+  if (btn) { btn.textContent = 'Devam →'; btn.disabled = false; }
+  showToast('Hoş geldin, ' + isim + '! 🎉', 'success');
+  obSonraki(3);
+}
+
+// obIsimKaydet fonksiyonunu override et
+window.obIsimKaydet = obIsimKaydetGelismis;
+
+// Auth değişince profil senkronize et
+window.addEventListener('mihrab-auth', function(e) {
+  var user = e.detail.user;
+  if (user && !user.isAnonymous) {
+    var savedNick = localStorage.getItem('kullaniciAdi') || user.displayName;
+    if (savedNick) profilKaydet(savedNick, user.displayName);
+  }
+});
+
+// Ziyaret kaydedince sayacı güncelle
+var _eskiZiyaret = window.ziyaretKaydetSafe;
+window.ziyaretKaydetSafe = async function(camiId, vakit, notlar) {
+  if (_eskiZiyaret) await _eskiZiyaret(camiId, vakit, notlar);
+  ziyaretSayisiGuncelle();
+};
+
 </script>
 
 <!-- ═══ CAMİ EKLE BUTONU ═══ -->
