@@ -6,6 +6,7 @@
 <title>MIHRÂB — Cami İz Haritam</title>
 <meta name="description" content="İstanbul camilerini keşfedin, ziyaretlerinizi kaydedin, seri oluşturun.">
 <meta name="theme-color" content="#0D0A04">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MIHRÂB">
@@ -17,7 +18,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="MIHRÂB — Cami İz Haritam">
 <meta name="twitter:description" content="İstanbul'un 1.000 camisini keşfet, ziyaretlerini haritada biriktir.">
-<link rel="manifest" href="data:application/json,%7B%22name%22%3A%22MIHR%C3%82B%22%2C%22short_name%22%3A%22MIHR%C3%82B%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230D0A04%22%2C%22theme_color%22%3A%22%230D0A04%22%7D">
+<link rel="manifest" href="data:application/json,%7B%22name%22%3A%22MIHRAB%22%2C%22short_name%22%3A%22MIHRAB%22%2C%22start_url%22%3A%22.%2F%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230D0A04%22%2C%22theme_color%22%3A%22%23F0D060%22%7D">
 <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Cinzel:wght@600;900&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
@@ -1421,7 +1422,7 @@ window.getUserId=getUserId;
 <div id="networkBanner">📡 İnternet bağlantısı kesildi — offline mod</div>
 
 <!-- Harita Yükleniyor -->
-<div id="mapLoadingOverlay">
+<div id="mapLoadingOverlay" class="hidden">
   <div class="map-loader-spinner"></div>
   <div class="map-loader-text">Harita yükleniyor...</div>
 </div>
@@ -1813,7 +1814,7 @@ const VAKITLER={
   en:['Fajr','Dhuhr','Asr','Maghrib','Isha']
 };
 const VAKIT_KEYS=['Sabah','Öğle','İkindi','Akşam','Yatsı'];
-const VAKIT_COLORS={Sabah:'#F59E0B',Öğle:'#F0D060',İkindi:'#52B788',Akşam:'#4AABE8',Yatsı:'#A78BFA'};
+const VAKIT_COLORS={Sabah:'#F59E0B',Ogle:'#F0D060',Ikindi:'#52B788',Aksam:'#4AABE8',Yatsi:'#A78BFA'};
 const DAYS={
   tr:['Paz','Pzt','Sal','Çar','Per','Cum','Cmt'],
   ar:['أحد','اثن','ثلث','أرب','خمس','جمع','سبت'],
@@ -1839,7 +1840,7 @@ function topLoyalCount(){return Math.max(0,...Object.keys(visited).map(id=>getLo
 // ============================================================
 function getPrayerTimes(){
   const now=new Date(),h=now.getHours(),m=now.getMinutes(),total=h*60+m;
-  const times={Sabah:[5*60+15,7*60+10],Öğle:[12*60+45,14*60+30],İkindi:[15*60+30,17*60+0],Akşam:[18*60+30,20*60+0],Yatsı:[20*60+15,23*60+59]};
+  const times={Sabah:[5*60+15,7*60+10],Ogle:[12*60+45,14*60+30],Ikindi:[15*60+30,17*60+0],Aksam:[18*60+30,20*60+0],Yatsi:[20*60+15,23*60+59]};
   for(const[v,[s,e]]of Object.entries(times)) if(total>=s&&total<=e) return{vakit:v,valid:true};
   return{vakit:null,valid:false};
 }
@@ -4415,12 +4416,12 @@ function suAnkiVakitAdi() {
   const h = s.getHours();
   if (h >= 4  && h < 6)  return 'Sabah';
   if (h >= 6  && h < 12) return 'Öğle öncesi';
-  if (h >= 12 && h < 13) return 'Öğle';
+  if (h >= 12 && h < 13) return 'Ogle';
   if (h >= 13 && h < 15) return 'İkindi öncesi';
-  if (h >= 15 && h < 17) return 'İkindi';
+  if (h >= 15 && h < 17) return 'Ikindi';
   if (h >= 17 && h < 19) return 'Akşam öncesi';
-  if (h >= 19 && h < 20) return 'Akşam';
-  if (h >= 20 && h < 23) return 'Yatsı';
+  if (h >= 19 && h < 20) return 'Aksam';
+  if (h >= 20 && h < 23) return 'Yatsi';
   return 'Gece';
 }
 
@@ -4816,13 +4817,13 @@ const TARIHI_CAMI_BILGI = {
     ziyaretciler: '5.000.000+/yıl'
   },
   5: { // Fatih
-    hikaye: 'İstanbul'un fethinden sonra inşa edilen ilk büyük cami. Fatih Sultan Mehmet'in türbesi de burada.',
-    ozellikleri: ['İlk Osmanlı külliyesi', 'Fatih'in türbesi', '16 medrese'],
+    hikaye: "Istanbul'un fethinden sonra insaa edilen ilk buyuk cami. Fatih Sultan Mehmet'in turbesi de burada.",
+    ozellikleri: ['Ilk Osmanli kulliyesi', 'Fatih turbesi', '16 medrese'],
     ziyaretciler: '2.000.000+/yıl'
   },
   4: { // Eyüp Sultan
-    hikaye: 'Hz. Muhammed'in (SAV) sahabe-i kiramından Ebû Eyyûb el-Ensârî'nin makamı burada. İstanbul'un en kutsal mekânı.',
-    ozellikleri: ['İstanbul'un ilk camisi (1458)', 'Osmanlı şehzadelerinin kılıç kuşanma yeri', 'Hz. Eyyüb el-Ensarî türbesi'],
+    hikaye: "Hz. Muhammed'in (SAV) sahabesi Ebu Eyyub el-Ensari'nin makamı burada. Istanbul'un en kutsal mekanı.",
+    ozellikleri: ["Istanbul'un ilk camisi (1458)", 'Sehzade kilic kusanma yeri', 'Ebu Eyyub turbesi'],
     ziyaretciler: '4.000.000+/yıl'
   }
 };
@@ -5393,12 +5394,7 @@ function paylasimKartiOlustur() {
   });
 
   // ─── Motivasyon mesajı ───
-  const mesajlar = [
-    '"Her namaz bir iz bırakır."',
-    '"İz bırak, hatıra oluştur."',
-    '"İstanbul'u cami cami keşfet."',
-    '"Seri devam ediyor... 🔥"',
-  ];
+  const mesajlar = ['Her namaz bir iz birakir.','Iz birak, hatira olustur.','Istanbulu kesfet.','Seri devam ediyor... 🔥'];
   const mesaj = mesajlar[Math.floor(toplamZiyaret % mesajlar.length)];
   ctx.fillStyle = 'rgba(240,208,96,0.55)';
   ctx.font = 'italic 13px serif';
@@ -5467,7 +5463,7 @@ Sen de keşfet → ${url}`;
       a.download = 'mihrab-story.png';
       a.href = canvas.toDataURL('image/png');
       a.click();
-      showToast('Görsel indirildi — Instagram'da paylaşın 📸', 'info', 5000);
+      showToast('Gorsel indirildi — Instagramda paylasin 📸', 'info', 5000);
       break;
     }
   }
