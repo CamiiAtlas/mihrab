@@ -1258,7 +1258,7 @@ window.getUserId=getUserId;
 
 <!-- HEADER -->
 <div class="header">
-  <div class="logo">
+  <div class="logo" onclick="logoTikla()" style="cursor:pointer;">
     <div style="filter:drop-shadow(0 0 8px rgba(240,208,96,.4));display:flex;align-items:center"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 60" width="52" height="26" fill="none">
   <!-- Zemin çizgisi -->
   <line x1="2" y1="56" x2="118" y2="56" stroke="#F0D060" stroke-width="0.8" opacity="0.4"/>
@@ -1571,7 +1571,7 @@ window.getUserId=getUserId;
 const I18N = {
   tr: {
     // Genel
-    logo_sub:'CAMİ İZ HARİTAM',
+    logo_sub:'CAMİ VE IBADET ATLASI',
     streak:'Seri', mosque:'Cami', prayer:'Namaz', done:'Tamamlandı',
     // Tablar
     tab_map:'🗺️ Harita', tab_streak:'🔥 Seri', tab_dua:'🤲 Dua', tab_stats:'📊 İstatistik',
@@ -1665,7 +1665,7 @@ const I18N = {
   },
 
   ar: {
-    logo_sub:'خريطة مساجدي',
+    logo_sub:'أطلس المساجد',
     streak:'سلسلة', mosque:'مسجد', prayer:'صلاة', done:'اكتمل',
     tab_map:'🗺️ الخريطة', tab_streak:'🔥 السلسلة', tab_dua:'🤲 الدعاء', tab_stats:'📊 إحصائيات',
     sidebar_title:'🕌 مساجد إسطنبول',
@@ -1747,7 +1747,7 @@ const I18N = {
   },
 
   en: {
-    logo_sub:'MY MOSQUE MAP',
+    logo_sub:'MOSQUE & WORSHIP ATLAS',
     streak:'Streak', mosque:'Mosque', prayer:'Prayer', done:'Done',
     tab_map:'🗺️ Map', tab_streak:'🔥 Streak', tab_dua:'🤲 Dua', tab_stats:'📊 Stats',
     sidebar_title:'🕌 Istanbul Mosques',
@@ -5429,7 +5429,7 @@ function paylasimKartiOlustur() {
   ctx.fillStyle = 'rgba(240,208,96,0.4)';
   ctx.font = '10px sans-serif';
   ctx.letterSpacing = '4px';
-  ctx.fillText('CAMİ İZ HARİTAM', W/2, 78);
+  ctx.fillText('CAMİ VE IBADET ATLASI', W/2, 78);
 
   // ─── Cami ikonu ───
   ctx.font = '56px serif';
@@ -5824,6 +5824,22 @@ window.addEventListener('load',function(){
     try{if(window.map&&window.map.invalidateSize)window.map.invalidateSize(true);}catch(e){}
   },2500);
 });
+
+
+function logoTikla() {
+  // Onboarding tamamlandıysa sıfırla ve tekrar göster
+  localStorage.removeItem('mihrab_onboard_done');
+  var ov = document.getElementById('onboardingOverlay');
+  if (ov) {
+    ov.style.display = 'flex';
+    ov.style.opacity = '0';
+    setTimeout(function(){ ov.style.opacity = '1'; }, 10);
+    // İlk adıma dön
+    document.querySelectorAll('.ob-step').forEach(function(s){ s.classList.remove('active'); });
+    var s1 = document.getElementById('obStep1');
+    if (s1) s1.classList.add('active');
+  }
+}
 
 </script>
 
