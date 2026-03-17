@@ -592,6 +592,37 @@
 .btn-google{width:100%;padding:14px;background:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px;}
 .btn-anonim{width:100%;padding:12px;background:transparent;border:1px solid rgba(255,255,255,.15);border-radius:12px;color:rgba(255,255,255,.5);font-size:13px;cursor:pointer;margin-bottom:10px;}
 .btn-kapat-auth{width:100%;padding:10px;background:transparent;border:none;color:rgba(255,255,255,.3);font-size:12px;cursor:pointer;}
+
+/* ─── Cami Sayacı Numeratör ─── */
+.ob-counter-wrap {
+  display: inline-flex; align-items: baseline; gap: 4px;
+  background: rgba(240,208,96,0.08);
+  border: 1px solid rgba(240,208,96,0.25);
+  border-radius: 12px;
+  padding: 6px 16px;
+  margin: 4px 0 2px;
+}
+.ob-counter-num {
+  font-family: 'Cinzel', serif;
+  font-size: 28px;
+  font-weight: 900;
+  color: #F0D060;
+  line-height: 1;
+  letter-spacing: 1px;
+  transition: all 0.3s ease;
+}
+.ob-counter-label {
+  font-size: 12px;
+  color: rgba(240,208,96,0.6);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+.ob-counter-num.animate { animation: countUp 0.4s ease; }
+
 </style>
 <style>
 :root{
@@ -1217,8 +1248,13 @@ window.getUserId=getUserId;
 </svg></span>
       <div class="ob-title">Hoş Geldiniz</div>
       <div class="ob-desc">
-        Namaz kıldığınız camileri haritada biriktierin.<br>
-        <strong>İstanbul'un 1.000 camisi</strong> sizi bekliyor.
+        Namaz kıldığınız camileri haritada biriktirin.<br>
+        İstanbul'da şu an
+        <span class="ob-counter-wrap">
+          <span class="ob-counter-num" id="obCamiSayac">1.000</span>
+          <span class="ob-counter-label">cami</span>
+        </span>
+        <br>sizi bekliyor.
       </div>
       <div class="ob-dots">
         <div class="ob-dot active" id="obDot1"></div>
@@ -1361,6 +1397,30 @@ window.getUserId=getUserId;
       <button class="lang-btn" onclick="setLang('ar')">ع</button>
       <button class="lang-btn" onclick="setLang('en')">EN</button>
     </div>
+
+    <!-- REALhub kapak imzası -->
+    <a href="https://www.real-hub.com" target="_blank" rel="noopener" style="
+      display:inline-flex; align-items:center; gap:8px;
+      text-decoration:none; margin-top:28px;
+      padding:8px 18px;
+      background:rgba(37,99,235,0.08);
+      border:1px solid rgba(37,99,235,0.2);
+      border-radius:20px;
+      opacity:0.7;
+      transition:all 0.2s;
+    " onmouseover="this.style.opacity='1';this.style.borderColor='rgba(37,99,235,0.5)'" 
+       onmouseout="this.style.opacity='0.7';this.style.borderColor='rgba(37,99,235,0.2)'">
+      <span style="font-size:9px;color:rgba(255,255,255,0.5);letter-spacing:2px;font-family:sans-serif;text-transform:uppercase;">Powered by</span>
+      <svg viewBox="0 0 200 44" width="80" height="18" xmlns="http://www.w3.org/2000/svg">
+  <path d="M6,36 L6,22 L15,13 L24,22 L24,36 Z" fill="#2563EB"/>
+  <path d="M3,24 L15,11 L27,24" fill="none" stroke="#2563EB" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="11" y="27" width="8" height="9" fill="#0D0A04" rx="0.8"/>
+  <rect x="13" y="20" width="5" height="5" fill="#10B981" rx="0.5"/>
+  <text x="34" y="29" font-family="Helvetica Neue,Arial,sans-serif" font-size="14" font-weight="300" letter-spacing="2" fill="rgba(255,255,255,0.8)">REAL</text>
+  <text x="76" y="29" font-family="Helvetica Neue,Arial,sans-serif" font-size="14" font-weight="700" letter-spacing="0.5" fill="rgba(255,255,255,0.8)">hub</text>
+</svg>
+    </a>
+
   </div>
 </div>
 
@@ -5861,6 +5921,44 @@ function logoTikla() {
     if (s1) s1.classList.add('active');
   }
 }
+
+
+// ─── Cami Sayacı — localStorage'dan bekleyen camiler dahil ─── 
+function obCamiSayacGuncelle() {
+  var base = 1000;
+  try {
+    var bekleyenler = JSON.parse(localStorage.getItem('bekleyenCamiler') || '[]');
+    // Onaylananları say
+    var onaylanan = bekleyenler.filter(function(c){ return c.status === 'onaylandi'; }).length;
+    var toplam = base + onaylanan;
+    var el = document.getElementById('obCamiSayac');
+    if (!el) return;
+    // Animasyonlu sayma
+    var baslangic = parseInt(el.textContent.replace(/[^0-9]/g,'')) || base;
+    if (baslangic === toplam) return;
+    var adim = toplam > baslangic ? 1 : -1;
+    var interval = setInterval(function(){
+      baslangic += adim;
+      el.textContent = baslangic.toLocaleString('tr-TR');
+      el.classList.remove('animate');
+      void el.offsetWidth;
+      el.classList.add('animate');
+      if (baslangic === toplam) clearInterval(interval);
+    }, 50);
+  } catch(e) {}
+}
+
+// Sayfa açılınca ve cami eklenince çalıştır
+window.addEventListener('load', function(){
+  setTimeout(obCamiSayacGuncelle, 800);
+});
+
+// Cami onaylandığında sayacı güncelle (mevcut onay fonksiyonuna yama)
+var _eskiCamiOnay = window.camiOnerGonder;
+window.camiOnerGonder = function() {
+  if (_eskiCamiOnay) _eskiCamiOnay.apply(this, arguments);
+  setTimeout(obCamiSayacGuncelle, 500);
+};
 
 </script>
 
