@@ -623,6 +623,34 @@
 }
 .ob-counter-num.animate { animation: countUp 0.4s ease; }
 
+
+/* ─── Onboarding Dil Seçici ─── */
+.ob-lang-wrap {
+  display: flex; gap: 8px; justify-content: center;
+  margin-bottom: 20px;
+}
+.ob-lang-btn {
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid rgba(240,208,96,0.25);
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.5);
+  transition: all 0.2s;
+  letter-spacing: 1px;
+}
+.ob-lang-btn.selected {
+  background: rgba(240,208,96,0.15);
+  border-color: rgba(240,208,96,0.6);
+  color: #F0D060;
+}
+.ob-lang-btn:hover {
+  border-color: rgba(240,208,96,0.4);
+  color: rgba(240,208,96,0.8);
+}
+
 </style>
 <style>
 :root{
@@ -1261,7 +1289,13 @@ window.getUserId=getUserId;
         <div class="ob-dot" id="obDot2"></div>
         <div class="ob-dot" id="obDot3"></div>
       </div>
-      <button class="btn-ob-next" onclick="obSonraki(2)">Başlayalım →</button>
+      <!-- Dil Seçici -->
+      <div class="ob-lang-wrap">
+        <button class="ob-lang-btn selected" id="obLangTR" onclick="obDilSec('tr')">TR</button>
+        <button class="ob-lang-btn" id="obLangEN" onclick="obDilSec('en')">EN</button>
+        <button class="ob-lang-btn" id="obLangAR" onclick="obDilSec('ar')">عربي</button>
+      </div>
+            <button class="btn-ob-next" id="obBaslaBtn" onclick="obSonraki(2)">Başlayalım →</button>
       <!-- REALhub kapak imzası -->
       <a href="https://www.real-hub.com" target="_blank" rel="noopener" style="
         display:inline-flex;align-items:center;gap:8px;
@@ -6087,6 +6121,40 @@ window.ziyaretKaydetSafe = async function(camiId, vakit, notlar) {
   if (_eskiZiyaret) await _eskiZiyaret(camiId, vakit, notlar);
   ziyaretSayisiGuncelle();
 };
+
+
+// ─── Onboarding Dil Seçici ───
+function obDilSec(lang) {
+  // Butonları güncelle
+  ['TR','EN','AR'].forEach(function(l) {
+    var btn = document.getElementById('obLang' + l.toUpperCase().replace('AR','AR'));
+    if (btn) btn.classList.remove('selected');
+  });
+  var btnId = lang === 'tr' ? 'obLangTR' : lang === 'en' ? 'obLangEN' : 'obLangAR';
+  var btn = document.getElementById(btnId);
+  if (btn) btn.classList.add('selected');
+  
+  // Dili uygula
+  if (typeof setLang === 'function') setLang(lang);
+  
+  // Başlayalım butonunu da güncelle
+  var baslaBtn = document.getElementById('obBaslaBtn');
+  if (baslaBtn) {
+    var labels = { tr: 'Başlayalım →', en: 'Get Started →', ar: 'ابدأ الآن ←' };
+    baslaBtn.textContent = labels[lang] || 'Başlayalım →';
+  }
+  
+  // localStorage'a kaydet
+  try { localStorage.setItem('mihrab_lang', lang); } catch(e) {}
+}
+
+// Sayfa açılınca kayıtlı dili yükle
+window.addEventListener('load', function() {
+  try {
+    var savedLang = localStorage.getItem('mihrab_lang') || 'tr';
+    if (savedLang !== 'tr') obDilSec(savedLang);
+  } catch(e) {}
+});
 
 </script>
 
