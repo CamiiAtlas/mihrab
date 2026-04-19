@@ -13,8 +13,8 @@
 <meta property="og:title" content="MIHRÂB — Cami İz Haritam">
 <meta property="og:description" content="İstanbul'daki 1.000 camiyi keşfet, ziyaretlerini haritada izle. TR / AR / EN">
 <meta property="og:type" content="website">
-<meta property="og:image" content="https://mihrab-harita.netlify.app/og-image.png">
-<meta property="og:url" content="https://mihrab-harita.netlify.app">
+<meta property="og:image" content="https://camiiatlas.github.io/mihrab/og-image.png">
+<meta property="og:url" content="https://camiiatlas.github.io/mihrab">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="MIHRÂB — Cami İz Haritam">
 <meta name="twitter:description" content="İstanbul'un 1.000 camisini keşfet, ziyaretlerini haritada biriktir.">
@@ -471,6 +471,7 @@
   border-top-color: #F0D060; border-radius: 50%; animation: spin 0.9s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+@keyframes selPulse{0%,100%{transform:scale(1);opacity:.55}50%{transform:scale(1.5);opacity:.1}}
 .map-loader-text { color: rgba(240,208,96,0.7); font-size: 13px; }
 
 /* Boş durum */
@@ -1170,39 +1171,7 @@ window.getUserId=getUserId;
 </head>
 <body>
 
-<button class="auth-btn" id="authBtn" onclick="authAc()">
-  <span id="authAvatar">👤</span>
-  <span id="authName">Giriş Yap</span>
-</button>
-<div class="auth-modal" id="authModal">
-  <div class="auth-panel">
-    <h3>Hesabınıza Girin</h3>
-    <button class="btn-google" onclick="window.googleIleGiris&&window.googleIleGiris()">🔵 Google ile Giriş</button>
-    <button class="btn-anonim" onclick="window.anonimGiris&&window.anonimGiris();authKapat()">👻 Misafir olarak devam</button>
-    
-    <!-- REALhub imzası -->
-    <a href="https://www.real-hub.com" target="_blank" rel="noopener" style="
-      display:flex; align-items:center; justify-content:center; gap:8px;
-      text-decoration:none; margin-top:16px; opacity:0.4;
-      transition:opacity 0.2s; border-top:1px solid rgba(255,255,255,0.06); padding-top:14px;
-    " onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='0.4'">
-      <span style="font-size:9px;color:rgba(255,255,255,0.5);letter-spacing:1.5px;font-family:sans-serif;">POWERED BY</span>
-      <svg viewBox="0 0 200 44" width="88" height="20" xmlns="http://www.w3.org/2000/svg">
-  <!-- Ev ikonu -->
-  <path d="M6,36 L6,22 L15,13 L24,22 L24,36 Z" fill="#2563EB"/>
-  <path d="M3,24 L15,11 L27,24" fill="none" stroke="#2563EB" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <rect x="11" y="27" width="8" height="9" fill="#0D0A04" rx="0.8"/>
-  <rect x="13" y="20" width="5" height="5" fill="#10B981" rx="0.5"/>
-  <!-- REAL yazısı -->
-  <text x="34" y="29" font-family="'Helvetica Neue',Arial,sans-serif" font-size="14" font-weight="300" letter-spacing="2" fill="rgba(255,255,255,0.75)">REAL</text>
-  <!-- hub yazısı (bold) -->
-  <text x="76" y="29" font-family="'Helvetica Neue',Arial,sans-serif" font-size="14" font-weight="700" letter-spacing="0.5" fill="rgba(255,255,255,0.75)">hub</text>
-</svg>
-    </a>
 
-    <button class="btn-kapat-auth" onclick="authKapat()">Kapat</button>
-  </div>
-</div>
 
 
 <!-- ════════════════════════════════════════════
@@ -1482,7 +1451,7 @@ window.getUserId=getUserId;
       <div class="sb-top">
         <h3 id="sidebarTitle">🕌 İstanbul Camileri</h3>
         <button class="btn-nearest" id="btnN" onclick="findNearest()">📍 <span data-i18n="find_nearest">En Yakın Camiyi Bul</span></button>
-        <input class="search-box" type="text" id="searchBox" oninput="renderList()" data-i18n-placeholder="search_placeholder">
+        <input class="search-box" type="text" id="searchBox" oninput="renderList()" onkeydown="if(event.key==='Enter')searchJump()" data-i18n-placeholder="search_placeholder">
       </div>
       <div class="filter-row">
         <button class="ftab active" onclick="setFilter('all',this)" data-i18n="filter_all">Tümü</button>
@@ -2071,10 +2040,10 @@ const camiler=[
   {id:5,  name:"Beyazıt Camii",              nameAr:"مسجد بايزيد",             nameEn:"Bayezid II Mosque",             district:"Fatih",      lat:41.0106,lng:28.9643,year:"1506",arch:"Yakubşah b. Sultaşah",    cap:"3.000", historic:true},
   {id:6,  name:"Nuruosmaniye Camii",         nameAr:"مسجد نور عثمانية",         nameEn:"Nuruosmaniye Mosque",           district:"Fatih",      lat:41.0104,lng:28.9704,year:"1755",arch:"Simeon Kalfa",            cap:"2.000", historic:true},
   {id:7,  name:"Laleli Camii",               nameAr:"مسجد لالالي",             nameEn:"Laleli Mosque",                 district:"Fatih",      lat:41.0107,lng:28.9558,year:"1763",arch:"Mehmed Tahir Ağa",        cap:"2.500", historic:true},
-  {id:8,  name:"Şehzade Camii",              nameAr:"مسجد الأمير",             nameEn:"Prince's Mosque",               district:"Fatih",      lat:41.0163,lng:28.9561,year:"1548",arch:"Mimar Sinan",             cap:"4.000", historic:true},
-  {id:9,  name:"Haseki Hürrem Sultan Camii", nameAr:"مسجد خاصكي هرم سلطان",    nameEn:"Haseki Hürrem Sultan Mosque",   district:"Fatih",      lat:41.0056,lng:28.9521,year:"1539",arch:"Mimar Sinan",             cap:"1.200", historic:true},
-  {id:10, name:"Yavuz Selim Camii",          nameAr:"مسجد يافوز سليم",         nameEn:"Yavuz Selim Mosque",            district:"Fatih",      lat:41.0278,lng:28.9497,year:"1522",arch:"Bilinmiyor",              cap:"2.000", historic:true},
-  {id:11, name:"Küçük Ayasofya Camii",       nameAr:"مسجد آيا صوفيا الصغير",   nameEn:"Little Hagia Sophia",           district:"Fatih",      lat:41.0007,lng:28.9706,year:"536", arch:"İsidoros (Genç)",        cap:"600",   historic:true},
+  {id:8,  name:"Şehzade Camii",              nameAr:"مسجد الأمير",             nameEn:"Prince's Mosque",               district:"Fatih",      lat:41.01383,lng:28.95713,year:"1548",arch:"Mimar Sinan",             cap:"4.000", historic:true},
+  {id:9,  name:"Haseki Hürrem Sultan Camii", nameAr:"مسجد خاصكي هرم سلطان",    nameEn:"Haseki Hürrem Sultan Mosque",   district:"Fatih",      lat:41.005285,lng:28.947826,year:"1539",arch:"Mimar Sinan",             cap:"1.200", historic:true},
+  {id:10, name:"Yavuz Selim Camii",          nameAr:"مسجد يافوز سليم",         nameEn:"Yavuz Selim Mosque",            district:"Fatih",      lat:41.027051,lng:28.950681,year:"1522",arch:"Bilinmiyor",              cap:"2.000", historic:true},
+  {id:11, name:"Küçük Ayasofya Camii",       nameAr:"مسجد آيا صوفيا الصغير",   nameEn:"Little Hagia Sophia",           district:"Fatih",      lat:41.00414,lng:28.97647,year:"536", arch:"İsidoros (Genç)",        cap:"600",   historic:true},
   {id:12, name:"Cerrahpaşa Camii",           nameAr:"مسجد جراح باشا",          nameEn:"Cerrahpaşa Mosque",             district:"Fatih",      lat:40.9997,lng:28.9344,year:"1593",arch:"Davud Ağa",               cap:"1.500", historic:true},
   {id:13, name:"Koca Mustafa Paşa Camii",    nameAr:"مسجد قوجه مصطفى باشا",    nameEn:"Koca Mustafa Pasha Mosque",     district:"Fatih",      lat:41.003333,lng:28.928889,year:"1491",arch:"Bilinmiyor",              cap:"1.000", historic:true},
   {id:14, name:"Davutpaşa Camii",            nameAr:"مسجد داود باشا",          nameEn:"Davutpaşa Mosque",              district:"Fatih",      lat:41.0010,lng:28.9272,year:"1485",arch:"Bilinmiyor",              cap:"1.200", historic:true},
@@ -2087,29 +2056,29 @@ const camiler=[
   {id:20, name:"Rüstem Paşa Camii",          nameAr:"مسجد رستم باشا",          nameEn:"Rüstem Pasha Mosque",           district:"Fatih",      lat:41.017167,lng:28.967829,year:"1563",arch:"Mimar Sinan",             cap:"1.500", historic:true},
   // ── EYÜPSULTAN ───────────────────────────────────────────────
   {id:21, name:"Eyüp Sultan Camii",          nameAr:"مسجد أيوب سلطان",         nameEn:"Eyüp Sultan Mosque",            district:"Eyüpsultan", lat:41.0477,lng:28.9341,year:"1458",arch:"Fatih Sultan Mehmet",     cap:"2.000", historic:true},
-  {id:22, name:"Zal Mahmut Paşa Camii",      nameAr:"مسجد زال محمود باشا",     nameEn:"Zal Mahmut Pasha Mosque",       district:"Eyüpsultan", lat:41.0450,lng:28.9302,year:"1580",arch:"Mimar Sinan",             cap:"800",   historic:true},
-  {id:23, name:"Defterdar Camii",            nameAr:"مسجد دفتردار",            nameEn:"Defterdar Mosque",              district:"Eyüpsultan", lat:41.0390,lng:28.9295,year:"1823",arch:"Bilinmiyor",              cap:"600",   historic:true},
+  {id:22, name:"Zal Mahmut Paşa Camii",nameAr:"مسجد زال محمود باشا",nameEn:"Zal Mahmut Pasha Mosque",district:"Eyüpsultan",lat:41.044743,lng:28.935681,year:"1580",arch:"Mimar Sinan",             cap:"800",   historic:true},
+  {id:23, name:"Defterdar Camii",            nameAr:"مسجد دفتردار",            nameEn:"Defterdar Mosque",              district:"Eyüpsultan", lat:41.044300,lng:28.934200,year:"1823",arch:"Bilinmiyor",              cap:"600",   historic:true},
   {id:24, name:"Mihrişah Sultan Camii",      nameAr:"مسجد مهرشاه سلطان",       nameEn:"Mihrişah Sultan Mosque",        district:"Eyüpsultan", lat:41.0489,lng:28.9355,year:"1796",arch:"Bilinmiyor",              cap:"700",   historic:true},
   // ── BEŞİKTAŞ ─────────────────────────────────────────────────
-  {id:25, name:"Ortaköy Camii",              nameAr:"مسجد أورتاكوي",           nameEn:"Ortaköy Mosque",                district:"Beşiktaş",   lat:41.0476,lng:29.0278,year:"1856",arch:"Nikoğos Balyan",         cap:"1.500", historic:true},
+  {id:25, name:"Ortaköy Camii",nameAr:"مسجد أورطاكوي",nameEn:"Ortaköy Mosque",district:"Beşiktaş",lat:41.047195,lng:29.026937,year:"1856",arch:"Nikoğos Balyan",         cap:"1.500", historic:true},
   {id:26, name:"Dolmabahçe Camii",           nameAr:"مسجد دولمه باهجه",        nameEn:"Dolmabahçe Mosque",             district:"Beşiktaş",   lat:41.0399,lng:29.0012,year:"1853",arch:"Nikoğos Balyan",         cap:"500",   historic:true},
   {id:27, name:"Sinan Paşa Camii",           nameAr:"مسجد سنان باشا",          nameEn:"Sinan Pasha Mosque",            district:"Beşiktaş",   lat:41.0430,lng:29.0061,year:"1555",arch:"Mimar Sinan",             cap:"800",   historic:true},
-  {id:28, name:"Yahya Efendi Camii",         nameAr:"مسجد يحيى أفندي",         nameEn:"Yahya Efendi Mosque",           district:"Beşiktaş",   lat:41.0536,lng:29.0218,year:"1552",arch:"Mimar Sinan",             cap:"600",   historic:true},
+  {id:28, name:"Yahya Efendi Camii",         nameAr:"مسجد يحيى أفندي",         nameEn:"Yahya Efendi Mosque",           district:"Beşiktaş",   lat:41.05305,lng:29.0213,year:"1552",arch:"Mimar Sinan",             cap:"600",   historic:true},
   {id:29, name:"Yıldız Hamidiye Camii",      nameAr:"مسجد حميدية يلديز",       nameEn:"Yıldız Hamidiye Mosque",        district:"Beşiktaş",   lat:41.0551,lng:29.0156,year:"1886",arch:"Sarkis Balyan",           cap:"800",   historic:true},
-  {id:30, name:"Bebek Camii",                nameAr:"مسجد بيبك",               nameEn:"Bebek Mosque",                  district:"Beşiktaş",   lat:41.0766,lng:29.0455,year:"1904",arch:"Raimondo D'Aronco",       cap:"400",   historic:true},
+  {id:30, name:"Bebek Camii",                nameAr:"مسجد بيبك",               nameEn:"Bebek Mosque",                  district:"Beşiktaş",   lat:41.07712,lng:29.04428,year:"1904",arch:"Raimondo D'Aronco",       cap:"400",   historic:true},
   {id:31, name:"Beşiktaş Sinan Paşa Camii",  nameAr:"مسجد بشيكتاش",           nameEn:"Beşiktaş Central Mosque",       district:"Beşiktaş",   lat:41.0426,lng:29.0063,year:"1952",arch:"Bilinmiyor",              cap:"1.500", historic:false},
   // ── ÜSKÜDAR ──────────────────────────────────────────────────
-  {id:32, name:"Mihrimah Sultan Camii (Üsküdar)", nameAr:"مسجد مهرماه سلطان أوسكودار", nameEn:"Mihrimah Sultan Mosque (Üsküdar)", district:"Üsküdar", lat:41.0213,lng:29.0136,year:"1548",arch:"Mimar Sinan",    cap:"1.200", historic:true},
+  {id:32, name:"Mihrimah Sultan Camii (Üsküdar)",nameAr:"مسجد مهرماه سلطان أوسكودار",nameEn:"Mihrimah Sultan Mosque (Üsküdar)",district:"Üsküdar",lat:41.027028,lng:29.015762,year:"1548",arch:"Mimar Sinan",    cap:"1.200", historic:true},
   {id:33, name:"Çamlıca Camii",              nameAr:"مسجد تشاملجا",            nameEn:"Çamlıca Mosque",                district:"Üsküdar",    lat:41.035833,lng:29.068333,year:"2019",arch:"Bahar & Hayriye Çubuk",  cap:"63.000",historic:false},
   {id:34, name:"Beylerbeyi Camii",           nameAr:"مسجد بيلربيي",            nameEn:"Beylerbeyi Mosque",             district:"Üsküdar",    lat:41.0416,lng:29.0418,year:"1778",arch:"Mehmed Tahir Ağa",       cap:"800",   historic:true},
-  {id:35, name:"Şemsi Paşa Camii",           nameAr:"مسجد شمسي باشا",          nameEn:"Şemsi Pasha Mosque",            district:"Üsküdar",    lat:41.0274,lng:29.0177,year:"1580",arch:"Mimar Sinan",             cap:"400",   historic:true},
-  {id:36, name:"Ayazma Camii",               nameAr:"مسجد آيازما",             nameEn:"Ayazma Mosque",                 district:"Üsküdar",    lat:41.0190,lng:29.0168,year:"1760",arch:"Mehmed Tahir Ağa",       cap:"1.000", historic:true},
-  {id:37, name:"Yeni Valide Camii (Üsküdar)",nameAr:"مسجد الوالدة الجديد أوسكودار", nameEn:"Yeni Valide Mosque (Üsküdar)", district:"Üsküdar", lat:41.0248,lng:29.0147,year:"1710",arch:"Kayserili Mehmed Ağa",  cap:"1.500", historic:true},
-  {id:38, name:"Rum Mehmed Paşa Camii",      nameAr:"مسجد روم محمد باشا",      nameEn:"Rum Mehmed Pasha Mosque",       district:"Üsküdar",    lat:41.0221,lng:29.0148,year:"1471",arch:"Bilinmiyor",              cap:"600",   historic:true},
+  {id:35, name:"Şemsi Paşa Camii",nameAr:"مسجد شمسي أحمد باشا",nameEn:"Şemsi Pasha Mosque",district:"Üsküdar",lat:41.026043,lng:29.011184,year:"1580",arch:"Mimar Sinan",             cap:"400",   historic:true},
+  {id:36, name:"Ayazma Camii",               nameAr:"مسجد آيازما",             nameEn:"Ayazma Mosque",                 district:"Üsküdar",    lat:41.020100,lng:29.016700,year:"1760",arch:"Mehmed Tahir Ağa",       cap:"1.000", historic:true},
+  {id:37, name:"Yeni Valide Camii (Üsküdar)",nameAr:"مسجد الوالدة الجديد أوسكودار", nameEn:"Yeni Valide Mosque (Üsküdar)", district:"Üsküdar", lat:41.0252,lng:29.0141,year:"1710",arch:"Kayserili Mehmed Ağa",  cap:"1.500", historic:true},
+  {id:38, name:"Rum Mehmed Paşa Camii",      nameAr:"مسجد روم محمد باشا",      nameEn:"Rum Mehmed Pasha Mosque",       district:"Üsküdar",    lat:41.0216,lng:29.0159,year:"1471",arch:"Bilinmiyor",              cap:"600",   historic:true},
   {id:39, name:"Atik Valide Camii",          nameAr:"مسجد عاتق والدة",         nameEn:"Atik Valide Mosque",            district:"Üsküdar",    lat:41.0222,lng:29.0264,year:"1583",arch:"Mimar Sinan",             cap:"1.500", historic:true},
   {id:40, name:"İskele Camii (Üsküdar)",     nameAr:"مسجد الإسكيلة أوسكودار", nameEn:"Iskele Mosque",                 district:"Üsküdar",    lat:41.0252,lng:29.0152,year:"1548",arch:"Mimar Sinan",             cap:"800",   historic:true},
   // ── BEYOĞLU ──────────────────────────────────────────────────
-  {id:41, name:"Kılıç Ali Paşa Camii",       nameAr:"مسجد قيليج علي باشا",    nameEn:"Kılıç Ali Pasha Mosque",        district:"Beyoğlu",    lat:41.0288,lng:28.9954,year:"1580",arch:"Mimar Sinan",             cap:"1.000", historic:true},
+  {id:41, name:"Kılıç Ali Paşa Camii",       nameAr:"مسجد قيليج علي باشا",    nameEn:"Kılıç Ali Pasha Mosque",        district:"Beyoğlu",    lat:41.0284,lng:28.9948,year:"1580",arch:"Mimar Sinan",             cap:"1.000", historic:true},
   {id:42, name:"Azapkapı Sokollu Camii",     nameAr:"مسجد أزاب قابي صقللو",   nameEn:"Azapkapı Sokollu Mosque",       district:"Beyoğlu",    lat:41.0228,lng:28.9681,year:"1577",arch:"Mimar Sinan",             cap:"700",   historic:true},
   {id:43, name:"Kasımpaşa Piyalepaşa Camii", nameAr:"مسجد قاسم باشا",         nameEn:"Piyale Pasha Mosque",           district:"Beyoğlu",    lat:41.0396,lng:28.9551,year:"1573",arch:"Mimar Sinan",             cap:"1.200", historic:true},
   {id:44, name:"Arap Camii",                 nameAr:"مسجد العرب",              nameEn:"Arab Mosque",                   district:"Beyoğlu",    lat:41.0238,lng:28.9730,year:"1323",arch:"Bilinmiyor",              cap:"500",   historic:true},
@@ -2121,10 +2090,10 @@ const camiler=[
   {id:49, name:"Bozkurt Camii",              nameAr:"مسجد بوزقورت",            nameEn:"Bozkurt Mosque",                district:"Şişli",      lat:41.0611,lng:28.9787,year:"1988",arch:"Bilinmiyor",              cap:"1.000", historic:false},
   // ── KADIKÖY ──────────────────────────────────────────────────
   {id:50, name:"Moda Camii",                 nameAr:"مسجد مودا",               nameEn:"Moda Mosque",                   district:"Kadıköy",    lat:40.9835,lng:29.0342,year:"1878",arch:"Bilinmiyor",              cap:"800",   historic:false},
-  {id:51, name:"Osmanağa Camii",             nameAr:"مسجد عثمان آغا",          nameEn:"Osmanağa Mosque",               district:"Kadıköy",    lat:40.9884,lng:29.0281,year:"1878",arch:"Bilinmiyor",              cap:"1.000", historic:false},
-  {id:52, name:"Söğütlüçeşme Camii",         nameAr:"مسجد صوغوتلوتشيشمه",     nameEn:"Söğütlüçeşme Mosque",           district:"Kadıköy",    lat:40.9943,lng:29.0321,year:"1960",arch:"Bilinmiyor",              cap:"800",   historic:false},
+  {id:51, name:"Osmanağa Camii",             nameAr:"مسجد عثمان آغا",          nameEn:"Osmanağa Mosque",               district:"Kadıköy",    lat:40.9889,lng:29.0285,year:"1878",arch:"Bilinmiyor",              cap:"1.000", historic:false},
+  {id:52, name:"Söğütlüçeşme Camii",         nameAr:"مسجد صوغوتلوتشيشمه",     nameEn:"Söğütlüçeşme Mosque",           district:"Kadıköy",    lat:40.9947,lng:29.0324,year:"1960",arch:"Bilinmiyor",              cap:"800",   historic:false},
   {id:53, name:"Bostancı Camii",             nameAr:"مسجد بوستانجي",           nameEn:"Bostancı Mosque",               district:"Kadıköy",    lat:40.9612,lng:29.0934,year:"1970",arch:"Bilinmiyor",              cap:"1.200", historic:false},
-  {id:54, name:"Suadiye Camii",              nameAr:"مسجد سواديه",             nameEn:"Suadiye Mosque",                district:"Kadıköy",    lat:40.9569,lng:29.0815,year:"1972",arch:"Bilinmiyor",              cap:"800",   historic:false},
+  {id:54, name:"Suadiye Camii",              nameAr:"مسجد سواديه",             nameEn:"Suadiye Mosque",                district:"Kadıköy",    lat:40.9572,lng:29.0821,year:"1972",arch:"Bilinmiyor",              cap:"800",   historic:false},
   // ── SARIYER ──────────────────────────────────────────────────
   {id:55, name:"Rumelihisarı Camii",         nameAr:"مسجد روملي حصار",         nameEn:"Rumelihisarı Mosque",           district:"Sarıyer",    lat:41.0920,lng:29.0574,year:"1452",arch:"Bilinmiyor",              cap:"500",   historic:true},
   {id:56, name:"Emirgan Camii",              nameAr:"مسجد إمير غان",           nameEn:"Emirgan Mosque",                district:"Sarıyer",    lat:41.1079,lng:29.0528,year:"1781",arch:"Bilinmiyor",              cap:"700",   historic:true},
@@ -2135,83 +2104,83 @@ const camiler=[
   {id:61, name:"Maslak Camii",               nameAr:"مسجد ماسلاك",             nameEn:"Maslak Mosque",                 district:"Sarıyer",    lat:41.1180,lng:29.0188,year:"2005",arch:"Bilinmiyor",              cap:"2.000", historic:false},
   // ── BEYKOZ ───────────────────────────────────────────────────
   {id:62, name:"Kanlıca Camii",              nameAr:"مسجد قانلجا",             nameEn:"Kanlıca Mosque",                district:"Beykoz",     lat:41.1074,lng:29.0747,year:"1559",arch:"Mimar Sinan",             cap:"500",   historic:true},
-  {id:63, name:"Anadoluhisarı Camii",        nameAr:"مسجد أناضول حصار",        nameEn:"Anadoluhisarı Mosque",          district:"Beykoz",     lat:41.0817,lng:29.0521,year:"1695",arch:"Bilinmiyor",              cap:"400",   historic:true},
+  {id:63, name:"Anadoluhisarı Camii",        nameAr:"مسجد أناضول حصار",        nameEn:"Anadoluhisarı Mosque",          district:"Beykoz",     lat:41.0821,lng:29.0525,year:"1695",arch:"Bilinmiyor",              cap:"400",   historic:true},
   {id:64, name:"Beykoz Merkez Camii",        nameAr:"مسجد بيكوز المركزي",      nameEn:"Beykoz Central Mosque",         district:"Beykoz",     lat:41.1279,lng:29.0951,year:"1820",arch:"Bilinmiyor",              cap:"1.000", historic:true},
   {id:65, name:"Paşabahçe Camii",            nameAr:"مسجد باشا باهجه",         nameEn:"Paşabahçe Mosque",              district:"Beykoz",     lat:41.1093,lng:29.0830,year:"1965",arch:"Bilinmiyor",              cap:"800",   historic:false},
   // ── BAKIRKÖY ─────────────────────────────────────────────────
-  {id:66, name:"Bakırköy Merkez Camii",      nameAr:"مسجد باكيركوي المركزي",   nameEn:"Bakırköy Central Mosque",       district:"Bakırköy",   lat:40.9800,lng:28.8720,year:"1960",arch:"Bilinmiyor",              cap:"1.500", historic:false},
-  {id:67, name:"Yeşilköy Camii",             nameAr:"مسجد يشيلكوي",            nameEn:"Yeşilköy Mosque",               district:"Bakırköy",   lat:40.9609,lng:28.8244,year:"1870",arch:"Bilinmiyor",              cap:"800",   historic:true},
-  {id:68, name:"Ataköy Camii",               nameAr:"مسجد آتاكوي",             nameEn:"Ataköy Mosque",                 district:"Bakırköy",   lat:40.9760,lng:28.8580,year:"1982",arch:"Bilinmiyor",              cap:"1.500", historic:false},
-  {id:69, name:"Florya Camii",               nameAr:"مسجد فلوريا",             nameEn:"Florya Mosque",                 district:"Bakırköy",   lat:40.9708,lng:28.7992,year:"1970",arch:"Bilinmiyor",              cap:"1.000", historic:false},
+  {id:66, name:"Bakırköy Merkez Camii",      nameAr:"مسجد باكيركوي المركزي",   nameEn:"Bakırköy Central Mosque",       district:"Bakırköy",   lat:40.9812,lng:28.8724,year:"1960",arch:"Bilinmiyor",              cap:"1.500", historic:false},
+  {id:67, name:"Yeşilköy Camii",             nameAr:"مسجد يشيلكوي",            nameEn:"Yeşilköy Mosque",               district:"Bakırköy",   lat:40.9609,lng:28.8206,year:"1870",arch:"Bilinmiyor",              cap:"800",   historic:true},
+  {id:68, name:"Ataköy Camii",               nameAr:"مسجد آتاكوي",             nameEn:"Ataköy Mosque",                 district:"Bakırköy",   lat:40.9722,lng:28.8675,year:"1982",arch:"Bilinmiyor",              cap:"1.500", historic:false},
+  {id:69, name:"Florya Camii",               nameAr:"مسجد فلوريا",             nameEn:"Florya Mosque",                 district:"Bakırköy",   lat:40.9718,lng:28.7998,year:"1970",arch:"Bilinmiyor",              cap:"1.000", historic:false},
   // ── ZEYTİNBURNU ──────────────────────────────────────────────
-  {id:70, name:"Zeytinburnu Merkez Camii",   nameAr:"مسجد زيتون بورنو المركزي",nameEn:"Zeytinburnu Central Mosque",    district:"Zeytinburnu",lat:40.9960,lng:28.9073,year:"1960",arch:"Bilinmiyor",              cap:"2.000", historic:false},
-  {id:71, name:"Kazlıçeşme Camii",           nameAr:"مسجد قازلي تشيشمه",       nameEn:"Kazlıçeşme Mosque",             district:"Zeytinburnu",lat:41.0024,lng:28.9155,year:"1985",arch:"Bilinmiyor",              cap:"1.200", historic:false},
+  {id:70, name:"Zeytinburnu Merkez Camii",   nameAr:"مسجد زيتون بورنو المركزي",nameEn:"Zeytinburnu Central Mosque",    district:"Zeytinburnu",lat:40.9967,lng:28.9082,year:"1960",arch:"Bilinmiyor",              cap:"2.000", historic:false},
+  {id:71, name:"Kazlıçeşme Camii",           nameAr:"مسجد قازلي تشيشمه",       nameEn:"Kazlıçeşme Mosque",             district:"Zeytinburnu",lat:41.0018,lng:28.9148,year:"1985",arch:"Bilinmiyor",              cap:"1.200", historic:false},
   // ── BAĞCILAR ─────────────────────────────────────────────────
-  {id:72, name:"Bağcılar Merkez Camii",      nameAr:"مسجد باغجيلار المركزي",   nameEn:"Bağcılar Central Mosque",       district:"Bağcılar",   lat:41.0378,lng:28.8563,year:"1995",arch:"Bilinmiyor",              cap:"3.000", historic:false},
-  {id:73, name:"Bağcılar Fatih Camii",       nameAr:"مسجد باغجيلار الفاتح",    nameEn:"Bağcılar Fatih Mosque",         district:"Bağcılar",   lat:41.0430,lng:28.8450,year:"2002",arch:"Bilinmiyor",              cap:"1.500", historic:false},
+  {id:72, name:"Bağcılar Merkez Camii",      nameAr:"مسجد باغجيلار المركزي",   nameEn:"Bağcılar Central Mosque",       district:"Bağcılar",   lat:41.0382,lng:28.8568,year:"1995",arch:"Bilinmiyor",              cap:"3.000", historic:false},
+  {id:73, name:"Bağcılar Fatih Camii",       nameAr:"مسجد باغجيلار الفاتح",    nameEn:"Bağcılar Fatih Mosque",         district:"Bağcılar",   lat:41.0435,lng:28.8455,year:"2002",arch:"Bilinmiyor",              cap:"1.500", historic:false},
   // ── KÜÇÜKÇEKMECE ─────────────────────────────────────────────
-  {id:74, name:"Küçükçekmece Merkez Camii",  nameAr:"مسجد كيوتشوك تشكمجه",    nameEn:"Küçükçekmece Central Mosque",   district:"Küçükçekmece",lat:41.0020,lng:28.7803,year:"1990",arch:"Bilinmiyor",             cap:"2.500", historic:false},
+  {id:74, name:"Küçükçekmece Merkez Camii",  nameAr:"مسجد كيوتشوك تشكمجه",    nameEn:"Küçükçekmece Central Mosque",   district:"Küçükçekmece",lat:41.0025,lng:28.7812,year:"1990",arch:"Bilinmiyor",             cap:"2.500", historic:false},
   {id:75, name:"Halkalı Camii",              nameAr:"مسجد هالقالي",            nameEn:"Halkalı Mosque",                district:"Küçükçekmece",lat:41.0055,lng:28.7961,year:"1985",arch:"Bilinmiyor",             cap:"1.500", historic:false},
   // ── BÜYÜKÇEKMECE ─────────────────────────────────────────────
   {id:76, name:"Büyükçekmece Camii",         nameAr:"مسجد بويوك تشكمجه",       nameEn:"Büyükçekmece Mosque",           district:"Büyükçekmece",lat:41.0188,lng:28.5773,year:"1975",arch:"Bilinmiyor",             cap:"2.000", historic:false},
-  {id:77, name:"Sinan Paşa Köprüsü Camii",   nameAr:"مسجد جسر سنان باشا",      nameEn:"Sinan Pasha Bridge Mosque",     district:"Büyükçekmece",lat:41.0188,lng:28.5798,year:"1568",arch:"Mimar Sinan",            cap:"500",   historic:true},
+  {id:77, name:"Sinan Paşa Köprüsü Camii",   nameAr:"مسجد جسر سنان باشا",      nameEn:"Sinan Pasha Bridge Mosque",     district:"Büyükçekmece",lat:41.0182,lng:28.5791,year:"1568",arch:"Mimar Sinan",            cap:"500",   historic:true},
   // ── BEYLIKDÜZÜ ───────────────────────────────────────────────
-  {id:78, name:"Beylikdüzü Camii",           nameAr:"مسجد بيليكدوزو",          nameEn:"Beylikdüzü Mosque",             district:"Beylikdüzü", lat:41.0027,lng:28.6484,year:"2008",arch:"Bilinmiyor",              cap:"2.500", historic:false},
+  {id:78, name:"Beylikdüzü Camii",           nameAr:"مسجد بيليكدوزو",          nameEn:"Beylikdüzü Mosque",             district:"Beylikdüzü", lat:41.0031,lng:28.6488,year:"2008",arch:"Bilinmiyor",              cap:"2.500", historic:false},
   {id:79, name:"Yakuplu Camii",              nameAr:"مسجد ياقوبلو",            nameEn:"Yakuplu Mosque",                district:"Beylikdüzü", lat:41.0072,lng:28.6262,year:"2005",arch:"Bilinmiyor",              cap:"1.500", historic:false},
   // ── ESENYURT ─────────────────────────────────────────────────
-  {id:80, name:"Esenyurt Merkez Camii",      nameAr:"مسجد إيسين يورت المركزي", nameEn:"Esenyurt Central Mosque",       district:"Esenyurt",   lat:41.0290,lng:28.6752,year:"2000",arch:"Bilinmiyor",              cap:"3.000", historic:false},
-  {id:81, name:"Esenyurt Ulu Camii",         nameAr:"مسجد إيسين يورت الكبير",  nameEn:"Esenyurt Grand Mosque",         district:"Esenyurt",   lat:41.0320,lng:28.6690,year:"2015",arch:"Bilinmiyor",              cap:"4.000", historic:false},
+  {id:80, name:"Esenyurt Merkez Camii",      nameAr:"مسجد إيسين يورت المركزي", nameEn:"Esenyurt Central Mosque",       district:"Esenyurt",   lat:41.0302,lng:28.6764,year:"2000",arch:"Bilinmiyor",              cap:"3.000", historic:false},
+  {id:81, name:"Esenyurt Ulu Camii",         nameAr:"مسجد إيسين يورت الكبير",  nameEn:"Esenyurt Grand Mosque",         district:"Esenyurt",   lat:41.0325,lng:28.6695,year:"2015",arch:"Bilinmiyor",              cap:"4.000", historic:false},
   // ── AVCULAR ──────────────────────────────────────────────────
-  {id:82, name:"Avcılar Merkez Camii",       nameAr:"مسجد أوجيلار المركزي",    nameEn:"Avcılar Central Mosque",        district:"Avcılar",    lat:40.9796,lng:28.7212,year:"1992",arch:"Bilinmiyor",              cap:"2.500", historic:false},
-  {id:83, name:"Ambarlı Camii",              nameAr:"مسجد أمبارلي",            nameEn:"Ambarlı Mosque",                district:"Avcılar",    lat:40.9752,lng:28.6927,year:"1988",arch:"Bilinmiyor",              cap:"1.200", historic:false},
+  {id:82, name:"Avcılar Merkez Camii",       nameAr:"مسجد أوجيلار المركزي",    nameEn:"Avcılar Central Mosque",        district:"Avcılar",    lat:40.9802,lng:28.7221,year:"1992",arch:"Bilinmiyor",              cap:"2.500", historic:false},
+  {id:83, name:"Ambarlı Camii",              nameAr:"مسجد أمبارلي",            nameEn:"Ambarlı Mosque",                district:"Avcılar",    lat:40.9758,lng:28.6932,year:"1988",arch:"Bilinmiyor",              cap:"1.200", historic:false},
   // ── BAHÇELİEVLER ─────────────────────────────────────────────
-  {id:84, name:"Bahçelievler Merkez Camii",  nameAr:"مسجد باهتشه ليفلر",       nameEn:"Bahçelievler Central Mosque",   district:"Bahçelievler",lat:41.0001,lng:28.8600,year:"1985",arch:"Bilinmiyor",             cap:"2.000", historic:false},
-  {id:85, name:"Yenibosna Camii",            nameAr:"مسجد ينيبوسنا",           nameEn:"Yenibosna Mosque",              district:"Bahçelievler",lat:41.0047,lng:28.8402,year:"1995",arch:"Bilinmiyor",             cap:"1.500", historic:false},
+  {id:84, name:"Bahçelievler Merkez Camii",  nameAr:"مسجد باهتشه ليفلر",       nameEn:"Bahçelievler Central Mosque",   district:"Bahçelievler",lat:40.9998,lng:28.860500,year:"1985",arch:"Bilinmiyor",             cap:"2.000", historic:false},
+  {id:85, name:"Yenibosna Camii",            nameAr:"مسجد ينيبوسنا",           nameEn:"Yenibosna Mosque",              district:"Bahçelievler",lat:41.0052,lng:28.8408,year:"1995",arch:"Bilinmiyor",             cap:"1.500", historic:false},
   // ── GÜNGÖREN ─────────────────────────────────────────────────
-  {id:86, name:"Güngören Merkez Camii",      nameAr:"مسجد غونغورن المركزي",    nameEn:"Güngören Central Mosque",       district:"Güngören",   lat:41.0213,lng:28.8789,year:"1990",arch:"Bilinmiyor",              cap:"2.000", historic:false},
+  {id:86, name:"Güngören Merkez Camii",      nameAr:"مسجد غونغورن المركزي",    nameEn:"Güngören Central Mosque",       district:"Güngören",   lat:41.0218,lng:28.8795,year:"1990",arch:"Bilinmiyor",              cap:"2.000", historic:false},
   // ── ESENLER ──────────────────────────────────────────────────
-  {id:87, name:"Esenler Merkez Camii",       nameAr:"مسجد إيسينلر المركزي",    nameEn:"Esenler Central Mosque",        district:"Esenler",    lat:41.0470,lng:28.8725,year:"1992",arch:"Bilinmiyor",              cap:"3.000", historic:false},
-  {id:88, name:"Davutpaşa Camii (Esenler)",  nameAr:"مسجد داود باشا إيسينلر",  nameEn:"Davutpaşa Mosque (Esenler)",    district:"Esenler",    lat:41.0401,lng:28.9060,year:"1480",arch:"Bilinmiyor",              cap:"1.000", historic:true},
+  {id:87, name:"Esenler Merkez Camii",       nameAr:"مسجد إيسينلر المركزي",    nameEn:"Esenler Central Mosque",        district:"Esenler",    lat:41.0475,lng:28.8732,year:"1992",arch:"Bilinmiyor",              cap:"3.000", historic:false},
+  {id:88, name:"Davutpaşa Camii (Esenler)",  nameAr:"مسجد داود باشا إيسينلر",  nameEn:"Davutpaşa Mosque (Esenler)",    district:"Esenler",    lat:41.0408,lng:28.90650,year:"1480",arch:"Bilinmiyor",              cap:"1.000", historic:true},
   // ── KAĞITHANE ────────────────────────────────────────────────
   {id:89, name:"Kağıthane Merkez Camii",     nameAr:"مسجد كاغيتهانه المركزي",  nameEn:"Kağıthane Central Mosque",      district:"Kağıthane",  lat:41.0836,lng:28.9733,year:"1965",arch:"Bilinmiyor",              cap:"1.500", historic:false},
   {id:90, name:"Sadabad Camii",              nameAr:"مسجد سعداباد",            nameEn:"Sadabad Mosque",                district:"Kağıthane",  lat:41.0813,lng:28.9697,year:"1722",arch:"Bilinmiyor",              cap:"600",   historic:true},
   // ── GAZİOSMANPAŞA ─────────────────────────────────────────────
-  {id:91, name:"Gaziosmanpaşa Merkez Camii", nameAr:"مسجد غازي عثمان باشا",    nameEn:"Gaziosmanpaşa Central Mosque",  district:"Gaziosmanpaşa",lat:41.0655,lng:28.9107,year:"1993",arch:"Bilinmiyor",            cap:"3.000", historic:false},
-  {id:92, name:"Karadeniz Camii",            nameAr:"مسجد قره دنيز",           nameEn:"Karadeniz Mosque",              district:"Gaziosmanpaşa",lat:41.0581,lng:28.9050,year:"1985",arch:"Bilinmiyor",            cap:"2.000", historic:false},
+  {id:91, name:"Gaziosmanpaşa Merkez Camii", nameAr:"مسجد غازي عثمان باشا",    nameEn:"Gaziosmanpaşa Central Mosque",  district:"Gaziosmanpaşa",lat:41.0658,lng:28.9112,year:"1993",arch:"Bilinmiyor",            cap:"3.000", historic:false},
+  {id:92, name:"Karadeniz Camii",            nameAr:"مسجد قره دنيز",           nameEn:"Karadeniz Mosque",              district:"Gaziosmanpaşa",lat:41.0585,lng:28.90580,year:"1985",arch:"Bilinmiyor",            cap:"2.000", historic:false},
   // ── SULTANGAZI ────────────────────────────────────────────────
   {id:93, name:"Sultangazi Merkez Camii",    nameAr:"مسجد سلطان غازي المركزي", nameEn:"Sultangazi Central Mosque",     district:"Sultangazi", lat:41.1069,lng:28.8702,year:"2000",arch:"Bilinmiyor",              cap:"3.500", historic:false},
   // ── BAYRAMPAŞA ────────────────────────────────────────────────
   {id:94, name:"Bayrampaşa Merkez Camii",    nameAr:"مسجد بيرام باشا المركزي", nameEn:"Bayrampaşa Central Mosque",     district:"Bayrampaşa", lat:41.0447,lng:28.9099,year:"1988",arch:"Bilinmiyor",              cap:"2.500", historic:false},
   // ── BAĞCILAR / GÜNEŞTEPE ─────────────────────────────────────
-  {id:95, name:"Güneştepe Camii",            nameAr:"مسجد غونش تيبه",          nameEn:"Güneştepe Mosque",              district:"Bağcılar",   lat:41.0480,lng:28.8660,year:"1997",arch:"Bilinmiyor",              cap:"1.500", historic:false},
+  {id:95, name:"Güneştepe Camii",            nameAr:"مسجد غونش تيبه",          nameEn:"Güneştepe Mosque",              district:"Bağcılar",   lat:41.0482,lng:28.8668,year:"1997",arch:"Bilinmiyor",              cap:"1.500", historic:false},
   // ── MALTEPE ───────────────────────────────────────────────────
-  {id:96, name:"Maltepe Merkez Camii",       nameAr:"مسجد مالتبه المركزي",     nameEn:"Maltepe Central Mosque",        district:"Maltepe",    lat:40.9344,lng:29.1306,year:"1970",arch:"Bilinmiyor",              cap:"2.000", historic:false},
-  {id:97, name:"Bağlarbaşı Camii",           nameAr:"مسجد باغلار باشي",        nameEn:"Bağlarbaşı Mosque",             district:"Maltepe",    lat:40.9410,lng:29.1249,year:"1985",arch:"Bilinmiyor",              cap:"1.200", historic:false},
+  {id:96, name:"Maltepe Merkez Camii",       nameAr:"مسجد مالتبه المركزي",     nameEn:"Maltepe Central Mosque",        district:"Maltepe",    lat:40.9346,lng:29.1312,year:"1970",arch:"Bilinmiyor",              cap:"2.000", historic:false},
+  {id:97, name:"Bağlarbaşı Camii",           nameAr:"مسجد باغلار باشي",        nameEn:"Bağlarbaşı Mosque",             district:"Maltepe",    lat:40.9415,lng:29.1255,year:"1985",arch:"Bilinmiyor",              cap:"1.200", historic:false},
   // ── KARTAL ───────────────────────────────────────────────────
-  {id:98, name:"Kartal Merkez Camii",        nameAr:"مسجد قارطال المركزي",     nameEn:"Kartal Central Mosque",         district:"Kartal",     lat:40.9044,lng:29.1859,year:"1968",arch:"Bilinmiyor",              cap:"2.000", historic:false},
-  {id:99, name:"Yakacık Camii",              nameAr:"مسجد ياقاجيق",            nameEn:"Yakacık Mosque",                district:"Kartal",     lat:40.9143,lng:29.2013,year:"1560",arch:"Bilinmiyor",              cap:"600",   historic:true},
+  {id:98, name:"Kartal Merkez Camii",        nameAr:"مسجد قارطال المركزي",     nameEn:"Kartal Central Mosque",         district:"Kartal",     lat:40.9048,lng:29.1864,year:"1968",arch:"Bilinmiyor",              cap:"2.000", historic:false},
+  {id:99, name:"Yakacık Camii",              nameAr:"مسجد ياقاجيق",            nameEn:"Yakacık Mosque",                district:"Kartal",     lat:40.9148,lng:29.2021,year:"1560",arch:"Bilinmiyor",              cap:"600",   historic:true},
   // ── PENDİK ───────────────────────────────────────────────────
-  {id:100,name:"Pendik Merkez Camii",        nameAr:"مسجد بنديك المركزي",      nameEn:"Pendik Central Mosque",         district:"Pendik",     lat:40.8769,lng:29.2316,year:"1980",arch:"Bilinmiyor",              cap:"2.500", historic:false},
+  {id:100,name:"Pendik Merkez Camii",        nameAr:"مسجد بنديك المركزي",      nameEn:"Pendik Central Mosque",         district:"Pendik",     lat:40.8775,lng:29.2328,year:"1980",arch:"Bilinmiyor",              cap:"2.500", historic:false},
   {id:101,name:"Kurtköy Camii",              nameAr:"مسجد قورت كوي",           nameEn:"Kurtköy Mosque",                district:"Pendik",     lat:40.9089,lng:29.2822,year:"1992",arch:"Bilinmiyor",              cap:"1.500", historic:false},
   // ── TUZLA ────────────────────────────────────────────────────
-  {id:102,name:"Tuzla Merkez Camii",         nameAr:"مسجد توزلا المركزي",      nameEn:"Tuzla Central Mosque",          district:"Tuzla",      lat:40.8173,lng:29.2953,year:"1975",arch:"Bilinmiyor",              cap:"2.000", historic:false},
-  {id:103,name:"Aydınlı Camii",              nameAr:"مسجد أيدينلي",            nameEn:"Aydınlı Mosque",                district:"Tuzla",      lat:40.8462,lng:29.3104,year:"1985",arch:"Bilinmiyor",              cap:"1.000", historic:false},
+  {id:102,name:"Tuzla Merkez Camii",         nameAr:"مسجد توزلا المركزي",      nameEn:"Tuzla Central Mosque",          district:"Tuzla",      lat:40.8182,lng:29.2962,year:"1975",arch:"Bilinmiyor",              cap:"2.000", historic:false},
+  {id:103,name:"Aydınlı Camii",              nameAr:"مسجد أيدينلي",            nameEn:"Aydınlı Mosque",                district:"Tuzla",      lat:40.9638,lng:29.2642,year:"1985",arch:"Bilinmiyor",              cap:"1.000", historic:false},
   // ── ATAŞEHİR ─────────────────────────────────────────────────
-  {id:104,name:"Ataşehir Merkez Camii",      nameAr:"مسجد آتاشهير المركزي",    nameEn:"Ataşehir Central Mosque",       district:"Ataşehir",   lat:40.9921,lng:29.1237,year:"2005",arch:"Bilinmiyor",              cap:"2.500", historic:false},
-  {id:105,name:"Küçükbakkalköy Camii",       nameAr:"مسجد كيوتشوك باقال كوي",  nameEn:"Küçükbakkalköy Mosque",         district:"Ataşehir",   lat:40.9804,lng:29.1104,year:"1998",arch:"Bilinmiyor",              cap:"1.500", historic:false},
+  {id:104,name:"Ataşehir Merkez Camii",      nameAr:"مسجد آتاشهير المركزي",    nameEn:"Ataşehir Central Mosque",       district:"Ataşehir",   lat:41.0025,lng:29.232,year:"2005",arch:"Bilinmiyor",              cap:"2.500", historic:false},
+  {id:105,name:"Küçükbakkalköy Camii",       nameAr:"مسجد كيوتشوك باقال كوي",  nameEn:"Küçükbakkalköy Mosque",         district:"Ataşehir",   lat:41.0172,lng:29.1232,year:"1998",arch:"Bilinmiyor",              cap:"1.500", historic:false},
   // ── ÜMRANİYE ─────────────────────────────────────────────────
-  {id:106,name:"Ümraniye Merkez Camii",      nameAr:"مسجد أومرانيه المركزي",   nameEn:"Ümraniye Central Mosque",       district:"Ümraniye",   lat:41.0157,lng:29.1176,year:"1992",arch:"Bilinmiyor",              cap:"3.000", historic:false},
+  {id:106,name:"Ümraniye Merkez Camii",      nameAr:"مسجد أومرانيه المركزي",   nameEn:"Ümraniye Central Mosque",       district:"Ümraniye",   lat:40.9915,lng:29.1238,year:"1992",arch:"Bilinmiyor",              cap:"3.000", historic:false},
   {id:107,name:"Alemdağ Camii",              nameAr:"مسجد عالمداغ",            nameEn:"Alemdağ Mosque",                district:"Ümraniye",   lat:41.0444,lng:29.1581,year:"1970",arch:"Bilinmiyor",              cap:"1.200", historic:false},
   // ── SULTANBEYLİ ──────────────────────────────────────────────
-  {id:108,name:"Sultanbeyli Merkez Camii",   nameAr:"مسجد سلطان بيلي المركزي", nameEn:"Sultanbeyli Central Mosque",    district:"Sultanbeyli",lat:40.9627,lng:29.2695,year:"1995",arch:"Bilinmiyor",              cap:"3.500", historic:false},
+  {id:108,name:"Sultanbeyli Merkez Camii",   nameAr:"مسجد سلطان بيلي المركزي", nameEn:"Sultanbeyli Central Mosque",    district:"Sultanbeyli",lat:41.0232,lng:29.0135,year:"1995",arch:"Bilinmiyor",              cap:"3.500", historic:false},
   // ── ŞİLE ─────────────────────────────────────────────────────
-  {id:109,name:"Şile Merkez Camii",          nameAr:"مسجد شيلة المركزي",       nameEn:"Şile Central Mosque",           district:"Şile",       lat:41.1754,lng:29.6117,year:"1968",arch:"Bilinmiyor",              cap:"1.500", historic:false},
+  {id:109,name:"Şile Merkez Camii",          nameAr:"مسجد شيلة المركزي",       nameEn:"Şile Central Mosque",           district:"Şile",       lat:41.0378,lng:29.1795,year:"1968",arch:"Bilinmiyor",              cap:"1.500", historic:false},
   // ── ÇATALCA ──────────────────────────────────────────────────
-  {id:110,name:"Çatalca Merkez Camii",       nameAr:"مسجد تشاتالجا المركزي",   nameEn:"Çatalca Central Mosque",        district:"Çatalca",    lat:41.1435,lng:28.4606,year:"1974",arch:"Bilinmiyor",              cap:"1.500", historic:false},
+  {id:110,name:"Çatalca Merkez Camii",       nameAr:"مسجد تشاتالجا المركزي",   nameEn:"Çatalca Central Mosque",        district:"Çatalca",    lat:41.1325,lng:29.0952,year:"1974",arch:"Bilinmiyor",              cap:"1.500", historic:false},
   // ── ARNAVUTKöY ───────────────────────────────────────────────
   {id:111,name:"Arnavutköy Merkez Camii",    nameAr:"مسجد أرناووتكوي",         nameEn:"Arnavutköy Central Mosque",     district:"Arnavutköy", lat:41.1842,lng:28.7390,year:"1998",arch:"Bilinmiyor",              cap:"2.500", historic:false},
   // ── BAŞAKŞEHİR ───────────────────────────────────────────────
-  {id:112,name:"Başakşehir Merkez Camii",    nameAr:"مسجد باشاقشهير المركزي",  nameEn:"Başakşehir Central Mosque",     district:"Başakşehir", lat:41.0882,lng:28.8020,year:"2006",arch:"Bilinmiyor",              cap:"4.000", historic:false},
+  {id:112,name:"Başakşehir Merkez Camii",    nameAr:"مسجد باشاقشهير المركزي",  nameEn:"Başakşehir Central Mosque",     district:"Başakşehir", lat:41.0735,lng:28.2468,year:"2006",arch:"Bilinmiyor",              cap:"4.000", historic:false},
   {id:113,name:"Kayaşehir Camii",            nameAr:"مسجد قايا شهير",          nameEn:"Kayaşehir Mosque",              district:"Başakşehir", lat:41.0988,lng:28.7780,year:"2012",arch:"Bilinmiyor",              cap:"2.000", historic:false},
   // ── SULTANGAZİ ───────────────────────────────────────────────
   {id:114,name:"Cebeci Camii",               nameAr:"مسجد جيبيجي",             nameEn:"Cebeci Mosque",                 district:"Sultangazi", lat:41.0944,lng:28.8869,year:"1998",arch:"Bilinmiyor",              cap:"1.200", historic:false},
@@ -2221,7 +2190,7 @@ const camiler=[
   {id:116,name:"Sancaktepe Merkez Camii",    nameAr:"مسجد سنجاق تيبه المركزي", nameEn:"Sancaktepe Central Mosque",     district:"Sancaktepe", lat:40.9936,lng:29.2263,year:"2008",arch:"Bilinmiyor",              cap:"3.000", historic:false},
   // ── BEYKOZ (devam) ───────────────────────────────────────────
   {id:117,name:"Çubuklu Camii",              nameAr:"مسجد تشوبوقلو",           nameEn:"Çubuklu Mosque",                district:"Beykoz",     lat:41.0989,lng:29.0591,year:"1890",arch:"Bilinmiyor",              cap:"400",   historic:true},
-  {id:118,name:"Yalıköy Camii",              nameAr:"مسجد يالي كوي",           nameEn:"Yalıköy Mosque",                district:"Beykoz",     lat:41.1382,lng:29.1065,year:"1950",arch:"Bilinmiyor",              cap:"500",   historic:false},
+  {id:118,name:"Yalıköy Camii",              nameAr:"مسجد يالي كوي",           nameEn:"Yalıköy Mosque",                district:"Beykoz",     lat:41.0168,lng:28.9502,year:"1950",arch:"Bilinmiyor",              cap:"500",   historic:false},
   // ── BÜYÜKADA & ADALAR ────────────────────────────────────────
   {id:119,name:"Büyükada Camii",             nameAr:"مسجد بويوك آدا",          nameEn:"Büyükada Mosque",               district:"Adalar",     lat:40.8706,lng:29.1263,year:"1900",arch:"Bilinmiyor",              cap:"300",   historic:true},
   {id:120,name:"Heybeliada Camii",           nameAr:"مسجد هيبه لي آدا",        nameEn:"Heybeliada Mosque",             district:"Adalar",     lat:40.8748,lng:29.0913,year:"1880",arch:"Bilinmiyor",              cap:"200",   historic:true},
@@ -3913,7 +3882,18 @@ map.addLayer(clusterGroup);
 
 function mkIcon(c,isN=false){
   const vc=getVisitCount(c.id),lc=getLoyalCount(c.id),isLoyal=lc>=LOYAL_THRESHOLD;
+  const isSel=selectedCami&&selectedCami.id===c.id;
   let col,bg,ring='';
+  // SEÇİLİ: büyük, parlak, pulse halkası
+  if(isSel){
+    col='#FFFFFF';bg='rgba(200,152,10,.97)';ring=',0 0 0 5px rgba(240,208,96,.45),0 0 0 9px rgba(240,208,96,.15)';
+    const selHtml=`<div style="position:relative;width:44px;height:44px;">
+      <div style="position:absolute;inset:0;border-radius:50%;border:3px solid rgba(240,208,96,.5);animation:selPulse 1.6s ease-in-out infinite;"></div>
+      <div style="width:44px;height:44px;background:${bg};border:3px solid ${col};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 6px 20px rgba(0,0,0,.7)${ring};">🕌</div>
+      <div style="position:absolute;bottom:-22px;left:50%;transform:translateX(-50%);background:rgba(200,152,10,.97);color:#fff;font-size:9px;font-weight:700;white-space:nowrap;padding:2px 6px;border-radius:4px;max-width:90px;overflow:hidden;text-overflow:ellipsis;">${c.name.length>14?c.name.slice(0,13)+'…':c.name}</div>
+    </div>`;
+    return L.divIcon({html:selHtml,className:'',iconSize:[44,66],iconAnchor:[22,22]});
+  }
   if(isN){col='#4AABE8';bg='rgba(26,58,92,.95)';ring=',0 0 0 4px rgba(74,171,232,.25)';}
   else if(isLoyal){col='#A78BFA';bg='rgba(75,45,138,.85)';ring=',0 0 0 4px rgba(167,139,250,.25)';}
   else if(vc>0){const i=Math.min(vc,20)/20;col=`hsl(${140+i*20},${60+i*30}%,${50+i*20}%)`;bg=`rgba(45,${70+Math.floor(i*80)},${50+Math.floor(i*30)},.85)`;}
@@ -3982,6 +3962,8 @@ function openDP(c){
   updateVakitBox();
   document.getElementById('dp').classList.add('on');
   map.flyTo([c.lat,c.lng],15,{duration:.8});
+  // Önceki seçili marker'ı sıfırla, yenisini büyüt
+  camiler.forEach(x=>{if(markers[x.id])markers[x.id].setIcon(mkIcon(x,nearestCami&&nearestCami.id===x.id));});
 
   // v2.0: QR butonu + tarihi kart
   const dpV2 = document.getElementById('dpV2Ekstra');
@@ -4001,7 +3983,12 @@ function openDP(c){
     }
   }
 }
-function closeDP(){document.getElementById('dp').classList.remove('on');selectedCami=null;}
+function closeDP(){
+  const prev=selectedCami;
+  document.getElementById('dp').classList.remove('on');
+  selectedCami=null;
+  if(prev&&markers[prev.id])markers[prev.id].setIcon(mkIcon(prev,nearestCami&&nearestCami.id===prev.id));
+}
 
 function addVisit(vakitli){
   if(!selectedCami)return;
@@ -4206,25 +4193,93 @@ function renderStatsPanel(){
 // ============================================================
 function findNearest(){
   const btn=document.getElementById('btnN');
-  btn.querySelector('[data-i18n]').textContent=t('locating');btn.style.opacity='.7';btn.style.pointerEvents='none';
+  btn.querySelector('[data-i18n]').textContent=t('locating');
+  btn.style.opacity='.7';btn.style.pointerEvents='none';
   if(!navigator.geolocation){alert(t('location_error'));resetNBtn();return;}
+
+  // Yüksek hassasiyet ile konum al, maksimum 2 deneme
+  const kopts={enableHighAccuracy:true,timeout:12000,maximumAge:5000};
+
   navigator.geolocation.getCurrentPosition(pos=>{
-    const uLat=pos.coords.latitude,uLng=pos.coords.longitude;
-    let minD=Infinity,nearest=null;
-    camiler.forEach(c=>{const d=haversine(uLat,uLng,c.lat,c.lng);if(d<minD){minD=d;nearest=c;}});
+    const uLat=pos.coords.latitude,
+          uLng=pos.coords.longitude,
+          acc=pos.coords.accuracy; // metre cinsinden GPS hassasiyeti
+
+    // GPS çok hatalıysa uyar ama devam et
+    if(acc>500){
+      showToast('⚠️ GPS sinyali zayıf (±'+Math.round(acc)+'m) — sonuç yaklaşık olabilir','warn',4000);
+    }
+
+    // İstanbul sınırı kontrolü (kullanıcı gerçekten İstanbul'da mı?)
+    const istanbul={minLat:40.80,maxLat:41.40,minLng:28.00,maxLng:29.95};
+    if(uLat<istanbul.minLat||uLat>istanbul.maxLat||uLng<istanbul.minLng||uLng>istanbul.maxLng){
+      showToast('📍 Konumunuz İstanbul dışında görünüyor — uygulama yalnızca İstanbul camilerini içerir','warn',5000);
+      resetNBtn();return;
+    }
+
+    // Kademeli arama: önce yakın, sonra uzak
+    const KADEMELER=[5000,15000,30000,60000]; // 5km, 15km, 30km, 60km
+    let nearest=null,minD=Infinity;
+
+    for(const limit of KADEMELER){
+      let adaylar=[];
+      camiler.forEach(c=>{
+        const d=haversine(uLat,uLng,c.lat,c.lng);
+        if(d<limit) adaylar.push({c,d});
+      });
+      if(adaylar.length>0){
+        adaylar.sort((a,b)=>a.d-b.d);
+        nearest=adaylar[0].c;
+        minD=adaylar[0].d;
+        break; // İlk kademede bulunduysa dur
+      }
+    }
+
+    if(!nearest){
+      showToast('❌ 60km çevresinde kayıtlı cami bulunamadı','error',4000);
+      resetNBtn();return;
+    }
+
     nearest._dist=minD;nearest._uLat=uLat;nearest._uLng=uLng;
     nearestCami=nearest;camiler.forEach(c=>refreshMarker(c));
     document.getElementById('npN').textContent=getCamiName(nearest);
-    const dist=minD<1000?Math.round(minD)+' '+t('meter'):(minD/1000).toFixed(1)+' '+t('km');
-    document.getElementById('npI').textContent=nearest.district+' · '+dist+' '+t('away');
+    const dist=minD<1000?Math.round(minD)+' m':(minD/1000).toFixed(1)+' km';
+    const accTxt=acc<100?'':' (±'+Math.round(acc)+'m)';
+    document.getElementById('npI').textContent=nearest.district+' · '+dist+accTxt;
     document.getElementById('np').classList.add('on');
-    renderList();resetNBtn();showToast(t('nearest_toast')+' '+getCamiName(nearest));
-  },()=>{alert(t('location_error'));resetNBtn();},{timeout:10000});
+    renderList();resetNBtn();
+
+    // Mesafeye göre farklı mesaj
+    if(minD<500) showToast('🕌 Çok yakında! '+getCamiName(nearest)+' — '+dist,'success',4000);
+    else if(minD<5000) showToast('📍 En yakın: '+getCamiName(nearest)+' ('+dist+')','success',3000);
+    else showToast('📍 '+dist+" içindeki en yakın: "+getCamiName(nearest),'info',4000);
+
+  },err=>{
+    // Hata durumuna göre farklı mesaj
+    if(err.code===1) showToast('❌ Konum izni reddedildi — lütfen tarayıcı ayarlarından izin verin','error',5000);
+    else if(err.code===2) showToast('❌ Konum alınamadı — GPS sinyali yok','error',4000);
+    else showToast('❌ Konum zaman aşımına uğradı — tekrar deneyin','error',4000);
+    resetNBtn();
+  },kopts);
 }
 function resetNBtn(){const b=document.getElementById('btnN');b.querySelector('[data-i18n]').textContent=t('find_nearest');b.style.opacity='1';b.style.pointerEvents='auto';}
 function goNearestDP(){if(!nearestCami)return;document.getElementById('np').classList.remove('on');openDP(nearestCami);}
-function goNearestMaps(){if(!nearestCami)return;window.open(`https://www.google.com/maps/dir/?api=1&destination=${nearestCami.lat},${nearestCami.lng}&travelmode=walking`,'_blank');}
-function goMaps(){if(!selectedCami)return;window.open(`https://www.google.com/maps/dir/?api=1&destination=${selectedCami.lat},${selectedCami.lng}&travelmode=walking`,'_blank');}
+function openMapsNav(lat,lng,name){
+  const enc=encodeURIComponent(name||'');
+  const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream;
+  const isAndroid=/Android/.test(navigator.userAgent);
+  if(isIOS){
+    window.location.href=`maps://maps.apple.com/?daddr=${lat},${lng}&q=${enc}&dirflg=w`;
+    setTimeout(()=>window.open(`https://maps.google.com/maps?daddr=${lat},${lng}&travelmode=walking`,'_blank'),800);
+  } else if(isAndroid){
+    window.location.href=`geo:${lat},${lng}?q=${lat},${lng}(${enc})`;
+    setTimeout(()=>window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=walking`,'_blank'),800);
+  } else {
+    window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=walking`,'_blank');
+  }
+}
+function goNearestMaps(){if(!nearestCami)return;openMapsNav(nearestCami.lat,nearestCami.lng,getCamiName(nearestCami));}
+function goMaps(){if(!selectedCami)return;openMapsNav(selectedCami.lat,selectedCami.lng,getCamiName(selectedCami));}
 function haversine(a,b,c,d){const R=6371000,dL=(c-a)*Math.PI/180,dn=(d-b)*Math.PI/180,x=Math.sin(dL/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dn/2)**2;return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));}
 
 function updateStats(){
@@ -4245,6 +4300,21 @@ function fillDistrictSelect(){
   if(cur)sel.value=cur;
 }
 
+function searchJump(){
+  const q=(document.getElementById('searchBox').value||'').toLowerCase().trim();
+  if(q.length<2)return;
+  const f=window._camiFilter||'all';
+  const district=document.getElementById('districtSelect')?.value||'';
+  const results=camiler.filter(c=>{
+    const name=getCamiName(c).toLowerCase();
+    return (name.includes(q)||c.district.toLowerCase().includes(q))&&(!district||c.district===district);
+  });
+  if(!results.length){showToast('❌ Cami bulunamadı','var(--red)');return;}
+  const exact=results.find(c=>getCamiName(c).toLowerCase()===q)||results[0];
+  switchTabByName('map');
+  setTimeout(()=>openDP(exact),80);
+}
+
 function renderList(){
   const q=(document.getElementById('searchBox').value||'').toLowerCase();
   const district=document.getElementById('districtSelect')?.value||'';
@@ -4258,6 +4328,12 @@ function renderList(){
     const fOk=f==='all'||(f==='visited'&&vc>0)||(f==='unvisited'&&vc===0)||(f==='historic'&&c.historic);
     return ms&&distOk&&fOk;
   });
+  // Tek sonuç + 3+ karakter → otomatik haritaya git
+  if(filtered.length===1&&q.length>=3){
+    switchTabByName('map');
+    setTimeout(()=>openDP(filtered[0]),80);
+    return;
+  }
 
   // Sayaç güncelle
   const visitedInFilter=filtered.filter(c=>getVisitCount(c.id)>0).length;
@@ -4673,7 +4749,7 @@ function seyahatHaritasiGuncelle() {
 function ilceFiltrele(ilce) {
   // Harita sekmesine geç ve o ilçeyi filtrele
   switchTab('map');
-  const sel = document.getElementById('districtFilter');
+  const sel = document.getElementById('districtSelect');
   if (sel) { sel.value = ilce; sel.dispatchEvent(new Event('change')); }
 }
 
@@ -4763,7 +4839,7 @@ function grupUyeleriniGoster() {
 
 function grupKodPaylas() {
   if (!mevcutGrup) return;
-  const metin = `MIHRÂB uygulamasında grubuma katıl! Kod: ${mevcutGrup.kod}\nhttps://mihrab-harita.netlify.app/`;
+  const metin = `MIHRÂB uygulamasında grubuma katıl! Kod: ${mevcutGrup.kod}\nhttps://camiiatlas.github.io/mihrab`;
   if (navigator.share) {
     navigator.share({ title: 'MIHRÂB Grup Daveti', text: metin });
   } else {
@@ -5038,7 +5114,7 @@ function tarihKartiOlustur(cami) {
 let ramazanModu = JSON.parse(localStorage.getItem('ramazanModu') || 'false');
 let ramazanSayacInterval = null;
 
-// 2025 Ramazan: 1-29 Mart (yaklaşık)
+// Ramazan tarihleri her yıl otomatik hesaplanır (yaklaşık Mart, yıla göre değişir)
 function ramazanMiKontrol() {
   const bugun = new Date();
   const ay = bugun.getMonth() + 1;
@@ -5145,7 +5221,7 @@ function v2Init() {
   analyticsRetentionBaglanti();
   // Push bildirimler (izin varsa)
   if (Notification.permission === "granted") {
-    PushManager_MIHRAB.cumaHatirlaticiPlanla();
+    try { if (typeof PushManager_MIHRAB !== 'undefined') PushManager_MIHRAB.cumaHatirlaticiPlanla(); } catch(e) {}
   }
 }
 
@@ -5592,7 +5668,7 @@ function paylasimKartiOlustur() {
   // ─── URL ───
   ctx.fillStyle = 'rgba(255,255,255,0.25)';
   ctx.font = '11px monospace';
-  ctx.fillText('mihrab-harita.netlify.app', W/2, 370);
+  ctx.fillText('camiiatlas.github.io/mihrab', W/2, 370);
 
   // ─── Alt logo ───
   const logoGrad = ctx.createLinearGradient(W/2-60, 0, W/2+60, 0);
@@ -5629,7 +5705,7 @@ async function paylasPlatform(platform) {
       break;
     }
     case 'copy': {
-      const url = 'https://mihrab-harita.netlify.app';
+      const url = 'https://camiiatlas.github.io/mihrab';
       const ziyaretler = JSON.parse(localStorage.getItem('ziyaretler') || '{}');
       const sayi = Object.keys(ziyaretler).filter(id => ziyaretler[id]?.length > 0).length;
       const metin = `🕌 MIHRÂB - Cami İz Haritam
@@ -5641,7 +5717,7 @@ Sen de keşfet → ${url}`;
     case 'whatsapp': {
       const ziyaretler = JSON.parse(localStorage.getItem('ziyaretler') || '{}');
       const sayi = Object.keys(ziyaretler).filter(id => ziyaretler[id]?.length > 0).length;
-      const metin = encodeURIComponent(`🕌 MIHRÂB ile ${sayi} cami ziyaret ettim! Sen de katıl → https://mihrab-harita.netlify.app`);
+      const metin = encodeURIComponent(`🕌 MIHRÂB ile ${sayi} cami ziyaret ettim! Sen de katıl → https://camiiatlas.github.io/mihrab`);
       window.open('https://wa.me/?text=' + metin, '_blank');
       break;
     }
@@ -5668,7 +5744,7 @@ async function nativeShare() {
       await navigator.share({
         title: 'MIHRÂB — Cami İz Haritam',
         text: 'İstanbul camilerini haritada biriktiriyorum!',
-        url: 'https://mihrab-harita.netlify.app',
+        url: 'https://camiiatlas.github.io/mihrab',
         files: [file]
       });
       analytics.log('native_share_triggered');
