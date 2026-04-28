@@ -1107,7 +1107,8 @@ window.addEventListener('load', () => {
   }
   window.dispatchEvent(new Event('mihrab-ready'));
   fcmTokenAl();
-  console.log('🔥 Firebase hazır — mihrab-harita-227f9');
+  window.fbLog = function(e,p){try{logEvent(fbAnalytics,e,p||{});}catch(x){}};
+console.log('🔥 Firebase hazır — mihrab-harita-227f9');
 });
 
 </script>
@@ -1157,37 +1158,7 @@ function obBitir(){
   }
 })();
 </script>
-<script type="module">
-import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import{getFirestore,collection,addDoc,serverTimestamp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import{getAuth,signInWithPopup,GoogleAuthProvider,signInAnonymously,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import{getAnalytics,logEvent}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
-const cfg={apiKey:"AIzaSyBHMRw66oLG75WO0nRe3UWUcF091KS7ges",authDomain:"mihrab-harita-227f9.firebaseapp.com",projectId:"mihrab-harita-227f9",storageBucket:"mihrab-harita-227f9.firebasestorage.app",messagingSenderId:"1084322585116",appId:"1:1084322585116:web:4c8cc91dc708dcd49eddd9",measurementId:"G-5Y70EL5XB2"};
-const app=initializeApp(cfg);
-const db=getFirestore(app);
-const auth=getAuth(app);
-const fba=getAnalytics(app);
-window.db=db;window.auth=auth;
-window.googleIleGiris=async function(){
-  try{const r=await signInWithPopup(auth,new GoogleAuthProvider());authUIGuncelle(r.user);return r.user;}
-  catch(e){if(e.code!=='auth/popup-closed-by-user')alert('Giriş hatası');}
-};
-window.anonimGiris=async function(){
-  try{const r=await signInAnonymously(auth);authUIGuncelle(r.user);return r.user;}catch(e){}
-};
-onAuthStateChanged(auth,function(user){
-  window.currentUser=user;
-  if(user)authUIGuncelle(user);
-});
-window.firestoreZiyaretKaydet=async function(camiId,vakit){
-  if(!window.currentUser)return;
-  try{await addDoc(collection(db,'visits'),{userId:window.currentUser.uid,camiId,vakit,tarih:serverTimestamp()});}
-  catch(e){console.warn('Firestore:',e);}
-};
-signInAnonymously(auth).catch(function(){});
-window.fbLog=function(e,p){try{logEvent(fba,e,p||{});}catch(x){}};
-console.log('🔥 Firebase hazır — mihrab-harita-227f9');
-</script>
+
 
 <script>
 function sanitize(str){
