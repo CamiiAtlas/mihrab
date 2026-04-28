@@ -951,7 +951,7 @@ body.rtl .np-close{float:left;}
 import { initializeApp }            from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, getDoc, doc, setDoc, updateDoc, increment, query, where, orderBy, limit, onSnapshot, serverTimestamp }
                                      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { getAuth, signInWithPopup, GoogleAuthProvider, signInAnonymously, onAuthStateChanged }
+import { getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signInAnonymously, onAuthStateChanged }
                                      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getAnalytics, logEvent }    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
 import { getMessaging, getToken, onMessage }
@@ -976,7 +976,7 @@ const fbAnalytics = getAnalytics(app);
 // ─── Global'e aç (diğer scriptler kullanabilsin) ───
 window.db        = db;
 window.auth      = auth;
-window.fbAuth    = { signInWithPopup, GoogleAuthProvider, signInAnonymously };
+window.fbAuth    = { signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signInAnonymously };
 window.fbStore   = { collection, addDoc, getDocs, query, where, orderBy, limit, onSnapshot, serverTimestamp };
 window._fsExtra  = { doc, setDoc, updateDoc, increment };
 window.fbAnalyticsLoaded = true;
@@ -991,6 +991,19 @@ window.addEventListener('mihrab-ready', () => {
 });
 
 // ─── Auth durumu izle ───
+// Mobil redirect sonucunu yakala
+getRedirectResult(auth).then(result => {
+  if (result && result.user) {
+    const user = result.user;
+    showToast('Hoş geldiniz, ' + (user.displayName||'') + '! 👋', 'success');
+    analytics.log('login', { method: 'google_redirect' });
+  }
+}).catch(e => {
+  if (e.code && e.code !== 'auth/null-user') {
+    console.warn('Redirect result hatası:', e.code);
+  }
+});
+
 onAuthStateChanged(auth, async user => {
   window.currentUser = user;
   if (user) {
@@ -1148,12 +1161,19 @@ window.firestoreGrupOlustur = async function(kod, uyeAd) {
 window.googleIleGiris = async function() {
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account', hl: 'tr' });
+  const isMob = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
   try {
-    const result = await signInWithPopup(auth, provider);
-    const user = result.user;
-    showToast('Hoş geldiniz, ' + user.displayName + '! 👋', 'success');
-    analytics.log('login', { method: 'google' });
-    return user;
+    if (isMob) {
+      // Mobilde redirect kullan — popup bloke edilir
+      await signInWithRedirect(auth, provider);
+      return; // Sayfa yeniden yüklenecek, onAuthStateChanged yakalar
+    } else {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      showToast('Hoş geldiniz, ' + (user.displayName||'') + '! 👋', 'success');
+      analytics.log('login', { method: 'google' });
+      return user;
+    }
   } catch(e) {
     if (e.code !== 'auth/popup-closed-by-user') {
       showToast('Giriş başarısız, tekrar deneyin', 'error');
