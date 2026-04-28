@@ -949,7 +949,7 @@ body.rtl .np-close{float:left;}
 //  Proje: mihrab-harita-227f9
 // ────────────────────────────────────────────────
 import { initializeApp }            from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, limit, onSnapshot, serverTimestamp }
+import { getFirestore, collection, addDoc, getDocs, getDoc, doc, setDoc, updateDoc, increment, query, where, orderBy, limit, onSnapshot, serverTimestamp }
                                      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signInAnonymously, onAuthStateChanged }
                                      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -978,6 +978,7 @@ window.db        = db;
 window.auth      = auth;
 window.fbAuth    = { signInWithPopup, GoogleAuthProvider, signInAnonymously };
 window.fbStore   = { collection, addDoc, getDocs, query, where, orderBy, limit, onSnapshot, serverTimestamp };
+window._fsExtra  = { doc, setDoc, updateDoc, increment };
 window.fbAnalyticsLoaded = true;
 
 // ─── Analytics stub'ı gerçeğiyle değiştir ───
@@ -990,32 +991,113 @@ window.addEventListener('mihrab-ready', () => {
 });
 
 // ─── Auth durumu izle ───
-onAuthStateChanged(auth, user => {
+onAuthStateChanged(auth, async user => {
   window.currentUser = user;
   if (user) {
     window.dispatchEvent(new CustomEvent('mihrab-auth', { detail: { user } }));
     console.log('✅ Firebase Auth:', user.isAnonymous ? 'Anonim' : user.displayName);
+    // Google ile giriş yaptıysa Firestore'dan ziyaretleri çek
+    if (!user.isAnonymous) {
+      await window.firestoreZiyaretleriYukle(user.uid);
+    }
   }
 });
 
 // ─── Firestore: Ziyaret kaydet ───
 window.firestoreZiyaretKaydet = async function(camiId, vakit, notlar) {
-  if (!window.currentUser) return;
+  if (!window.currentUser || window.currentUser.isAnonymous) return;
   try {
+    const uid = window.currentUser.uid;
+    // 1. Ziyareti visits koleksiyonuna yaz
     await addDoc(collection(db, 'visits'), {
-      userId:    window.currentUser.uid,
-      camiId:    camiId,
-      vakit:     vakit,
-      notlar:    notlar || '',
-      tarih:     serverTimestamp(),
-      platform:  'web',
+      userId:   uid,
+      camiId:   Number(camiId),
+      vakit:    vakit || null,
+      vakitli:  !!vakit,
+      notlar:   notlar || '',
+      tarih:    serverTimestamp(),
+      platform: 'web',
     });
-    // Offline queue'dan da flush et
+    // 2. Cami topluluk sayacını artır (cami_stats koleksiyonu)
+    const { doc, setDoc, increment } = window._fsExtra || {};
+    if (doc && setDoc && increment) {
+      const ref = doc(db, 'cami_stats', String(camiId));
+      await setDoc(ref, {
+        toplamZiyaret: increment(1),
+        sonGuncelleme: serverTimestamp(),
+      }, { merge: true });
+      // Lokal cache güncelle
+      if (!window.camiStats) window.camiStats = {};
+      window.camiStats[camiId] = (window.camiStats[camiId] || 0) + 1;
+    }
     if (window.OfflineQueue) window.OfflineQueue.flush();
   } catch(e) {
     console.warn('Firestore yazma hatası:', e);
-    // Offline kuyruğa al
     if (window.OfflineQueue) window.OfflineQueue.enqueue('cami_visit', { camiId, vakit });
+  }
+};
+
+// Kullanıcının tüm ziyaretlerini Firestore'dan çek ve localStorage'a birleştir
+window.firestoreZiyaretleriYukle = async function(uid) {
+  try {
+    const q = query(
+      collection(db, 'visits'),
+      where('userId', '==', uid),
+      orderBy('tarih', 'desc'),
+      limit(2000)
+    );
+    const snap = await getDocs(q);
+    if (snap.empty) return;
+    // Mevcut localStorage verisini al
+    let localVisited = {};
+    try { localVisited = JSON.parse(localStorage.getItem('mihrab_v3') || '{}'); } catch(e) {}
+    // Firestore verisini birleştir
+    snap.forEach(docSnap => {
+      const d = docSnap.data();
+      const id = String(d.camiId);
+      if (!localVisited[id]) localVisited[id] = [];
+      // Aynı timestamp varsa tekrar ekleme
+      const ts = d.tarih?.seconds ? d.tarih.seconds * 1000 : Date.now();
+      const exists = localVisited[id].some(v => Math.abs((v.ts||0) - ts) < 60000);
+      if (!exists) {
+        const tarihStr = d.tarih?.toDate
+          ? d.tarih.toDate().toLocaleDateString('tr-TR', {day:'numeric',month:'long',year:'numeric'})
+          : new Date(ts).toLocaleDateString('tr-TR', {day:'numeric',month:'long',year:'numeric'});
+        localVisited[id].push({
+          date: tarihStr,
+          vakit: d.vakit || null,
+          vakitli: !!d.vakitli,
+          note: d.notlar || '',
+          ts: ts,
+        });
+      }
+    });
+    // localStorage'a kaydet
+    localStorage.setItem('mihrab_v3', JSON.stringify(localVisited));
+    // Global visited değişkenini güncelle
+    try { visited = localVisited; } catch(e) {}
+    // UI yenile
+    if (typeof renderList === 'function') renderList();
+    if (typeof updateStats === 'function') updateStats();
+    console.log('✅ Firestore ziyaretler yüklendi:', snap.size, 'kayıt');
+  } catch(e) {
+    console.warn('Firestore okuma hatası:', e);
+  }
+};
+
+// Tüm camiler için topluluk istatistiklerini çek
+window.camiStatsYukle = async function() {
+  try {
+    const snap = await getDocs(collection(db, 'cami_stats'));
+    window.camiStats = {};
+    snap.forEach(d => {
+      window.camiStats[d.id] = d.data().toplamZiyaret || 0;
+    });
+    console.log('✅ Cami istatistikleri yüklendi:', Object.keys(window.camiStats).length, 'cami');
+    // Harita ikonlarını yenile
+    if (typeof refreshAllMarkers === 'function') refreshAllMarkers();
+  } catch(e) {
+    console.warn('camiStats okuma hatası:', e);
   }
 };
 
@@ -1109,6 +1191,10 @@ window.addEventListener('load', () => {
   fcmTokenAl();
   window.fbLog = function(e,p){try{logEvent(fbAnalytics,e,p||{});}catch(x){}};
 console.log('🔥 Firebase hazır — mihrab-harita-227f9');
+// Başlangıçta topluluk istatistiklerini arka planda çek
+setTimeout(()=>{
+  if(window.camiStatsYukle) window.camiStatsYukle();
+}, 3000);
 });
 
 </script>
@@ -1650,6 +1736,7 @@ window.getUserId=getUserId;
   </div>
   <div class="dp-visit-count" id="dpVC"></div>
   <div class="dp-date" id="dpDate"></div>
+  <div id="dpCommunity" style="text-align:center;font-size:10px;color:rgba(240,208,96,.5);margin-top:3px;"></div>
 </div>
 
 <!-- EN YAKIN PANELİ -->
@@ -3990,7 +4077,13 @@ function openDP(c){
   }else document.getElementById('dpDB').style.display='none';
   const vc=getVisitCount(c.id),lc=getLoyalCount(c.id);
   const visits=visited[c.id]||[];
-  document.getElementById('dpVC').textContent=vc>0?`${vc} ${t('visits_label')} · ${lc} ${t('timely_label')}`:'';
+  document.getElementById('dpVC').textContent=vc>0?`${vc} ${t('visits_label')} · ${lc} ${t('timely_label')}`:t('not_visited_yet')||'Henüz ziyaret edilmedi';
+  // Topluluk istatistiği
+  const commEl=document.getElementById('dpCommunity');
+  if(commEl){
+    const commCount=window.camiStats&&window.camiStats[String(c.id)];
+    commEl.textContent=commCount>0?`👥 ${commCount} kişi bu camiyi işaretledi`:'';
+  }
   document.getElementById('dpDate').textContent=vc>0&&visits[visits.length-1]?.date?`${t('last_visit')} ${visits[visits.length-1].date}`:'';
   updateVakitBox();
   document.getElementById('dp').classList.add('on');
@@ -4036,6 +4129,10 @@ function addVisit(vakitli){
   const prevStreak=calcStreak();
   visited[id].push({date:d,vakit,vakitli:vakitli&&!!vakit,note,ts:now.getTime()});
   saveData();
+  // Firestore'a yaz (giriş yapmış kullanıcı için)
+  if(window.firestoreZiyaretKaydet && window.currentUser && !window.currentUser.isAnonymous){
+    window.firestoreZiyaretKaydet(id, vakitli?vakit:null, note).catch(()=>{});
+  }
   refreshMarker(selectedCami);renderList();updateStats();
   const vc=getVisitCount(id),lc=getLoyalCount(id);
   document.getElementById('dpVC').textContent=`${vc} ${t('visits_label')} · ${lc} ${t('timely_label')}`;
