@@ -728,6 +728,9 @@ body.rtl .dp{right:auto;left:13px;animation-name:sInRtl;}
 .cami-item{display:flex;align-items:center;gap:7px;padding:7px 8px;border-radius:8px;cursor:pointer;border:1px solid transparent;margin-bottom:3px;transition:all .15s;}
 .cami-item:hover{background:rgba(240,208,96,.06);border-color:rgba(240,208,96,.14);}
 .cami-item.visited{background:rgba(45,106,79,.12);border-color:rgba(82,183,136,.22);}
+/* bs-handle bar ve label — global */
+.bs-handle-bar{width:36px;height:4px;border-radius:2px;background:rgba(240,208,96,.35);margin-bottom:4px;}
+.bs-handle-label{font-size:10px;color:rgba(240,208,96,.5);font-weight:700;letter-spacing:.5px;}
 
 /* ============================================================
    MOBİL — Bottom Sheet Layout (≤768px)
@@ -752,16 +755,8 @@ body.rtl .dp{right:auto;left:13px;animation-name:sInRtl;}
   }
   .sidebar.bs-open{transform:translateY(0);}
 
-  /* Tutma çubuğu */
-  .bs-handle{
-    display:none;flex-direction:column;align-items:center;
-    padding:8px 0 4px;cursor:pointer;flex-shrink:0;
-    border-radius:18px 18px 0 0;
-  }
-  /* Sadece mobilde göster */
-  @media(max-width:768px){
-    .bs-handle{display:flex;}
-  }
+  /* Tutma çubuğu — sadece mobilde görünür */
+  .bs-handle{display:flex;flex-direction:column;align-items:center;padding:8px 0 4px;cursor:pointer;flex-shrink:0;border-radius:18px 18px 0 0;}
   .bs-handle-bar{
     width:36px;height:4px;border-radius:2px;
     background:rgba(240,208,96,.35);margin-bottom:4px;
