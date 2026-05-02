@@ -1210,6 +1210,7 @@ window.addEventListener('load', () => {
   fcmTokenAl();
   window.fbLog = function(e,p){try{logEvent(fbAnalytics,e,p||{});}catch(x){}};
 console.log('🔥 Firebase hazır — mihrab-harita-227f9');
+window.dispatchEvent(new CustomEvent('mihrab-firebase-ready'));
 // Başlangıçta topluluk istatistiklerini arka planda çek
 setTimeout(()=>{
   if(window.camiStatsYukle) window.camiStatsYukle();
@@ -6117,22 +6118,33 @@ function firebaseBaslat(config) {
 //  AUTH UI SİSTEMİ
 // ════════════════════════════════════════════════
 function authModalAc() {
-  // Modal açılırken güncel kullanıcı durumunu yansıt
-  authUIGuncelle(window.currentUser || null);
+  // Firebase hazır olana kadar kısa bekle, sonra kullanıcı durumunu kontrol et
+  const user = window.currentUser || null;
+  authUIGuncelle(user);
   document.getElementById('authModal').classList.add('open');
 }
 function authModalKapat() { document.getElementById('authModal').classList.remove('open'); }
 
 async function authGoogleGiris() {
+  if (!window.googleIleGiris) {
+    showToast('Lütfen birkaç saniye bekleyin...', 'info');
+    setTimeout(authGoogleGiris, 1500);
+    return;
+  }
   const btn = document.querySelector('.btn-google-giris');
-  btnYuklemeBaslat(btn);
-  const user = await window.googleIleGiris?.();
-  btnYuklemeBitti(btn);
+  if(btn) btnYuklemeBaslat(btn);
+  const user = await window.googleIleGiris();
+  if(btn) btnYuklemeBitti(btn);
   if (user) { authModalKapat(); authUIGuncelle(user); }
 }
 
 async function authAnonimGiris() {
-  const user = await window.anonimGiris?.();
+  if (!window.anonimGiris) {
+    showToast('Lütfen birkaç saniye bekleyin...', 'info');
+    setTimeout(authAnonimGiris, 1500);
+    return;
+  }
+  const user = await window.anonimGiris();
   if (user) {
     authModalKapat();
     authUIGuncelle(user);
@@ -6143,11 +6155,17 @@ async function authAnonimGiris() {
 async function authCikis() {
   try {
     await window.auth?.signOut();
+    window.currentUser = null;
     authUIGuncelle(null);
     authModalKapat();
     showToast('Çıkış yapıldı', 'info');
   } catch(e) { console.warn(e); }
 }
+
+// Firebase hazır olunca otomatik UI güncelle
+window.addEventListener('mihrab-firebase-ready', () => {
+  if (window.currentUser) authUIGuncelle(window.currentUser);
+});
 
 function authUIGuncelle(user) {
   const btn      = document.getElementById('authBtn');
