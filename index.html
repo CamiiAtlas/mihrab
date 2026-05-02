@@ -976,7 +976,7 @@ const fbAnalytics = getAnalytics(app);
 window.db        = db;
 window.auth      = auth;
 window.fbAuth    = { signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signInAnonymously };
-window.fbStore   = { collection, addDoc, getDocs, query, where, orderBy, limit, onSnapshot, serverTimestamp };
+window.fbStore   = { collection, addDoc, getDocs, getDoc, doc, setDoc, updateDoc, increment, query, where, orderBy, limit, onSnapshot, serverTimestamp };
 window._fsExtra  = { doc, setDoc, updateDoc, increment };
 window.fbAnalyticsLoaded = true;
 
@@ -3979,7 +3979,7 @@ const camiler=[
   {id:999,name:"Fatih Ulu Cami",nameAr:"مسجد الفاتح الكبير",nameEn:"Fatih Grand Mosque",district:"Fatih",lat:41.0082,lng:28.9438,year:"2024",arch:"Diyanet",cap:"15.000",historic:false},
 
   {id:1000,name:"İstanbul Büyük Cami",nameAr:"مسجد إسطنبول الكبير",nameEn:"Istanbul Grand Mosque",district:"Fatih",lat:41.0165,lng:28.9578,year:"2025",arch:"Diyanet",cap:"20.000",historic:false},
-];;
+];
 
 function getCamiName(c){
   if(currentLang==='ar') return c.nameAr||c.name;
