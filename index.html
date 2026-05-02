@@ -6116,7 +6116,11 @@ function firebaseBaslat(config) {
 // ════════════════════════════════════════════════
 //  AUTH UI SİSTEMİ
 // ════════════════════════════════════════════════
-function authModalAc() { document.getElementById('authModal').classList.add('open'); }
+function authModalAc() {
+  // Modal açılırken güncel kullanıcı durumunu yansıt
+  authUIGuncelle(window.currentUser || null);
+  document.getElementById('authModal').classList.add('open');
+}
 function authModalKapat() { document.getElementById('authModal').classList.remove('open'); }
 
 async function authGoogleGiris() {
