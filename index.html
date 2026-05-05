@@ -1314,7 +1314,7 @@ window.getUserId=getUserId;
      ════════════════════════════════════════════ -->
 
 <!-- ═══ AUTH BUTONU ═══ -->
-<button class="auth-btn" id="authBtn" onclick="authModalAc()">
+<button class="auth-btn" id="authBtn" onclick="authModalAcGuncelle()">
   <div class="auth-avatar" id="authAvatar">👤</div>
   <span class="auth-name" id="authName">Giriş Yap</span>
 </button>
@@ -6117,9 +6117,39 @@ function firebaseBaslat(config) {
 // ════════════════════════════════════════════════
 //  AUTH UI SİSTEMİ
 // ════════════════════════════════════════════════
+function authModalAcGuncelle() {
+  // Firebase auth'dan direkt al, yoksa window.currentUser'a bak
+  const firebaseUser = window.auth ? window.auth.currentUser : null;
+  const user = firebaseUser || window.currentUser || null;
+  // Ekranları manuel güncelle
+  const giris = document.getElementById('authGirisEkrani');
+  const cikis = document.getElementById('authCikisEkrani');
+  if (user && !user.isAnonymous) {
+    if (giris) giris.style.display = 'none';
+    if (cikis) cikis.style.display = 'block';
+    const mn = document.getElementById('authModalIsim');
+    const me = document.getElementById('authModalEmail');
+    const ma = document.getElementById('authModalAvatar');
+    if (mn) mn.textContent = user.displayName || '—';
+    if (me) me.textContent = user.email || '—';
+    if (ma) ma.innerHTML = user.photoURL
+      ? '<img src="'+user.photoURL+'" style="width:48px;height:48px;border-radius:50%;">'
+      : '👤';
+  } else if (user && user.isAnonymous) {
+    if (giris) giris.style.display = 'none';
+    if (cikis) cikis.style.display = 'block';
+    const mn = document.getElementById('authModalIsim');
+    if (mn) mn.textContent = 'Misafir';
+  } else {
+    if (giris) giris.style.display = 'block';
+    if (cikis) cikis.style.display = 'none';
+  }
+  document.getElementById('authModal').classList.add('open');
+}
+
 function authModalAc() {
-  // Firebase hazır olana kadar kısa bekle, sonra kullanıcı durumunu kontrol et
-  const user = window.currentUser || null;
+  // auth objesinden direkt güncel kullanıcıyı al
+  const user = window.auth?.currentUser || window.currentUser || null;
   authUIGuncelle(user);
   document.getElementById('authModal').classList.add('open');
 }
@@ -6159,6 +6189,8 @@ async function authCikis() {
     authUIGuncelle(null);
     authModalKapat();
     showToast('Çıkış yapıldı', 'info');
+    // Sayfayı yenile — temiz başlangıç
+    setTimeout(() => location.reload(), 800);
   } catch(e) { console.warn(e); }
 }
 
