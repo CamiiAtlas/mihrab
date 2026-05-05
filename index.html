@@ -6218,14 +6218,6 @@ window.ziyaretKaydetSafe = async function(camiId, vakit, notlar) {
 
 function authAc(){document.getElementById('authModal').classList.add('open');}
 function authKapat(){document.getElementById('authModal').classList.remove('open');}
-function authUIGuncelle(user){
-  var av=document.getElementById('authAvatar');
-  var nm=document.getElementById('authName');
-  if(!user){if(av)av.textContent='👤';if(nm)nm.textContent='Giriş Yap';return;}
-  if(user.isAnonymous){if(av)av.textContent='👻';if(nm)nm.textContent='Misafir';}
-  else{if(av)av.textContent='👤';if(nm)nm.textContent=(user.displayName||'').split(' ')[0]||'Hesap';}
-  authKapat();
-}
 // Harita render fix
 window.addEventListener('load',function(){
   setTimeout(function(){
