@@ -312,6 +312,17 @@
 .haftalik-challenge .ch-sure{color:rgba(255,255,255,.4);font-size:11px;margin-bottom:12px;}
 .ch-kural{background:rgba(255,255,255,.04);border-radius:10px;padding:10px 14px;font-size:13px;color:rgba(255,255,255,.7);margin-bottom:12px;line-height:1.5;}
 .ch-liderboard{list-style:none;padding:0;margin:0 0 12px;}
+/* Topluluk liderboard */
+.lb-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;margin-bottom:5px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);}
+.lb-item.ben{background:rgba(240,208,96,.08);border-color:rgba(240,208,96,.25);}
+.lb-item.top1{border-color:rgba(255,215,0,.4);background:rgba(255,215,0,.06);}
+.lb-item.top2{border-color:rgba(192,192,192,.3);background:rgba(192,192,192,.04);}
+.lb-item.top3{border-color:rgba(205,127,50,.3);background:rgba(205,127,50,.04);}
+.lb-sira{font-size:13px;font-weight:800;color:#F0D060;width:22px;text-align:center;flex-shrink:0;}
+.lb-avatar{width:28px;height:28px;border-radius:50%;background:rgba(240,208,96,.15);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;overflow:hidden;}
+.lb-avatar img{width:100%;height:100%;object-fit:cover;}
+.lb-isim{flex:1;font-size:12px;color:rgba(245,237,216,.85);}
+.lb-puan{font-size:12px;font-weight:700;color:#F0D060;white-space:nowrap;}
 .ch-liderboard li{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;margin-bottom:6px;font-size:13px;}
 .ch-liderboard li.ben{background:rgba(240,208,96,.12);border:1px solid rgba(240,208,96,.25);}
 .ch-liderboard li .ch-sira{font-weight:800;color:#F0D060;width:20px;text-align:center;}
@@ -1160,22 +1171,24 @@ window.firestoreGrupOlustur = async function(kod, uyeAd) {
 window.googleIleGiris = async function() {
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account', hl: 'tr' });
-  const isMob = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
   try {
-    if (isMob) {
-      // Mobilde redirect kullan — popup bloke edilir
-      await signInWithRedirect(auth, provider);
-      return; // Sayfa yeniden yüklenecek, onAuthStateChanged yakalar
-    } else {
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-      showToast('Hoş geldiniz, ' + (user.displayName||'') + '! 👋', 'success');
-      analytics.log('login', { method: 'google' });
-      return user;
-    }
+    // Önce popup dene — başarısız olursa redirect'e geç
+    const result = await signInWithPopup(auth, provider);
+    const user = result.user;
+    showToast('Hoş geldiniz, ' + (user.displayName||'') + '! 👋', 'success');
+    try { analytics.log('login', { method: 'google' }); } catch(x) {}
+    return user;
   } catch(e) {
-    if (e.code !== 'auth/popup-closed-by-user') {
-      showToast('Giriş başarısız, tekrar deneyin', 'error');
+    if (e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user') {
+      // Popup bloke edildi — redirect ile dene
+      try {
+        await signInWithRedirect(auth, provider);
+        // Redirect sonrası sayfa yeniden yüklenecek
+      } catch(e2) {
+        console.warn('Redirect hatası:', e2);
+      }
+    } else if (e.code !== 'auth/cancelled-popup-request') {
+      showToast('Giriş başarısız: ' + (e.message||e.code), 'error');
     }
   }
 };
@@ -1575,7 +1588,7 @@ window.getUserId=getUserId;
   <button class="nav-tab active" onclick="switchTab('map',this)" data-i18n="tab_map">🗺️ Harita</button>
   <button class="nav-tab" onclick="switchTab('streak',this)" data-i18n="tab_streak">🔥 Seri</button>
   <button class="nav-tab" onclick="switchTab('dua',this)" data-i18n="tab_dua">🤲 Dua</button>
-  <button class="nav-tab" onclick="switchTab('stats',this)" data-i18n="tab_stats">📊 İstatistik</button>
+  <button class="nav-tab" onclick="switchTab('stats',this);istatistikSekmesiAc()" data-i18n="tab_stats">📊 İstatistik</button>
 </div>
 
 <div class="main">
@@ -1699,6 +1712,19 @@ window.getUserId=getUserId;
         <ul class="en-cok-liste" id="enCokListe"></ul>
         <button onclick="switchTab('map')" style="width:100%;padding:11px;background:rgba(240,208,96,.08);border:1px solid rgba(240,208,96,.2);border-radius:12px;color:#F0D060;font-size:13px;cursor:pointer;margin-top:10px;">🗺️ Haritada Göster</button>
       </div>
+      <!-- ═══ TOPLULUK LİDERBOARD ═══ -->
+      <div style="margin-bottom:16px;" id="toplulukLiderWrap">
+        <h4 style="color:#F0D060;font-size:14px;margin:0 0 10px;">🏆 En Çok Cami Gezenler</h4>
+        <div id="toplulukLider" style="min-height:60px;">
+          <div style="text-align:center;color:rgba(245,237,216,.3);font-size:12px;padding:20px 0;">Yükleniyor...</div>
+        </div>
+        <h4 style="color:#F0D060;font-size:14px;margin:14px 0 10px;">🕌 En Çok Cami Ekleyenler</h4>
+        <div id="katkilarLider" style="min-height:60px;">
+          <div style="text-align:center;color:rgba(245,237,216,.3);font-size:12px;padding:20px 0;">Yükleniyor...</div>
+        </div>
+        <div style="text-align:center;font-size:10px;color:rgba(245,237,216,.2);margin-top:8px;">Her 24 saatte güncellenir</div>
+      </div>
+
       <!-- ═══ AKILLI ÖNERİ (v2.0) ═══ -->
       <div style="margin-bottom:16px;">
         <div class="v2-baslik">🧭 Şu An İçin Öneri</div>
@@ -4152,6 +4178,7 @@ function addVisit(vakitli){
   // Firestore'a yaz (giriş yapmış kullanıcı için)
   if(window.firestoreZiyaretKaydet && window.currentUser && !window.currentUser.isAnonymous){
     window.firestoreZiyaretKaydet(id, vakitli?vakit:null, note).catch(()=>{});
+    userSkoreGuncelle('ziyaret').catch(()=>{});
   }
   refreshMarker(selectedCami);renderList();updateStats();
   const vc=getVisitCount(id),lc=getLoyalCount(id);
@@ -4431,6 +4458,128 @@ function openMapsNav(lat,lng,name){
 function goNearestMaps(){if(!nearestCami)return;openMapsNav(nearestCami.lat,nearestCami.lng,getCamiName(nearestCami));}
 function goMaps(){if(!selectedCami)return;openMapsNav(selectedCami.lat,selectedCami.lng,getCamiName(selectedCami));}
 function haversine(a,b,c,d){const R=6371000,dL=(c-a)*Math.PI/180,dn=(d-b)*Math.PI/180,x=Math.sin(dL/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dn/2)**2;return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));}
+
+// ============================================================
+// TOPLULUK LİDERBOARD
+// ============================================================
+const LB_CACHE_KEY = 'mihrab_lb_cache';
+const LB_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 saat
+
+function lbSatir(u, i, puan, birim, benUid) {
+  const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}.`;
+  const cls = `lb-item${u.uid===benUid?' ben':''}${i===0?' top1':i===1?' top2':i===2?' top3':''}`;
+  const avatar = u.foto
+    ? `<div class="lb-avatar"><img src="${u.foto}" onerror="this.parentNode.textContent='👤'"></div>`
+    : `<div class="lb-avatar">👤</div>`;
+  return `<div class="${cls}">
+    <div class="lb-sira">${medal}</div>
+    ${avatar}
+    <div class="lb-isim">${u.isim||'Anonim'}${u.uid===benUid?' <span style="color:#F0D060;font-size:10px;">(sen)</span>':''}</div>
+    <div class="lb-puan">${puan} ${birim}</div>
+  </div>`;
+}
+
+async function toplulukLiderYukle(force=false) {
+  const el1 = document.getElementById('toplulukLider');
+  const el2 = document.getElementById('katkilarLider');
+  if (!el1 || !el2) return;
+
+  // Cache kontrolü
+  try {
+    const cache = JSON.parse(localStorage.getItem(LB_CACHE_KEY)||'{}');
+    if (!force && cache.ts && Date.now()-cache.ts < LB_CACHE_TTL && cache.ziyaret && cache.katki) {
+      renderLiderboard(cache.ziyaret, cache.katki);
+      return;
+    }
+  } catch(e) {}
+
+  // Firestore'dan çek
+  if (!window.db) return;
+  const benUid = window.currentUser?.uid;
+
+  try {
+    // Ziyaret skorları
+    const { collection, getDocs, query, orderBy, limit } = window.fbStore || {};
+    if (!collection) return;
+
+    const zSnap = await getDocs(query(
+      collection(window.db, 'user_scores'),
+      orderBy('toplamZiyaret','desc'),
+      limit(10)
+    ));
+
+    const ziyaretler = [];
+    zSnap.forEach(d => ziyaretler.push({uid:d.id, ...d.data()}));
+
+    // Katkı skorları
+    const kSnap = await getDocs(query(
+      collection(window.db, 'user_scores'),
+      orderBy('toplamKatki','desc'),
+      limit(10)
+    ));
+
+    const katkilar = [];
+    kSnap.forEach(d => katkilar.push({uid:d.id, ...d.data()}));
+
+    // Cache kaydet
+    localStorage.setItem(LB_CACHE_KEY, JSON.stringify({
+      ts: Date.now(), ziyaret: ziyaretler, katki: katkilar
+    }));
+
+    renderLiderboard(ziyaretler, katkilar);
+  } catch(e) {
+    console.warn('Liderboard yükleme hatası:', e);
+    el1.innerHTML = '<div style="text-align:center;color:rgba(245,237,216,.3);font-size:12px;padding:16px 0;">Henüz veri yok</div>';
+    el2.innerHTML = el1.innerHTML;
+  }
+}
+
+function renderLiderboard(ziyaretler, katkilar) {
+  const el1 = document.getElementById('toplulukLider');
+  const el2 = document.getElementById('katkilarLider');
+  const benUid = window.currentUser?.uid;
+
+  if (el1) {
+    if (!ziyaretler.length) {
+      el1.innerHTML = '<div style="text-align:center;color:rgba(245,237,216,.3);font-size:12px;padding:16px 0;">Henüz veri yok</div>';
+    } else {
+      el1.innerHTML = ziyaretler.map((u,i) => lbSatir(u, i, u.toplamZiyaret||0, 'cami', benUid)).join('');
+    }
+  }
+
+  if (el2) {
+    if (!katkilar.length) {
+      el2.innerHTML = '<div style="text-align:center;color:rgba(245,237,216,.3);font-size:12px;padding:16px 0;">Henüz cami eklenmedi</div>';
+    } else {
+      el2.innerHTML = katkilar.map((u,i) => lbSatir(u, i, u.toplamKatki||0, 'cami ekledi', benUid)).join('');
+    }
+  }
+}
+
+// Skor güncelle — ziyaret eklenince çağrılır
+async function userSkoreGuncelle(tip) {
+  if (!window.currentUser || window.currentUser.isAnonymous) return;
+  if (!window._fsExtra || !window.db) return;
+  const uid = window.currentUser.uid;
+  const { doc, setDoc, increment } = window._fsExtra;
+  try {
+    const ref = doc(window.db, 'user_scores', uid);
+    const update = { sonGuncelleme: window.fbStore.serverTimestamp() };
+    if (tip === 'ziyaret') update.toplamZiyaret = increment(1);
+    if (tip === 'katki')   update.toplamKatki   = increment(1);
+    // İsim ve fotoğrafı güncelle
+    update.isim = window.currentUser.displayName || 'Anonim';
+    update.foto = window.currentUser.photoURL || null;
+    await setDoc(ref, update, { merge: true });
+    // Cache temizle — bir sonraki açılışta taze veri gelsin
+    localStorage.removeItem(LB_CACHE_KEY);
+  } catch(e) { console.warn('Skor güncelleme hatası:', e); }
+}
+
+// İstatistik sekmesi açılınca liderboard yükle
+function istatistikSekmesiAc() {
+  toplulukLiderYukle();
+}
 
 function updateStats(){
   const total=camiler.length,vc=uniqueCamis(),tot=totalVisits(),pct=total?Math.round(vc/total*100):0,streak=calcStreak();
@@ -4801,6 +4950,8 @@ function camiOnerGonder() {
   document.getElementById('camiEkleForm').style.display = 'none';
   document.getElementById('camiEkleBasari').style.display = 'block';
   
+  // Skor güncelle
+  userSkoreGuncelle('katki').catch(()=>{});
   // İstatistik güncelle (katkı sayacı)
   const katkiSayisi = parseInt(localStorage.getItem('camiKatkiSayisi') || '0') + 1;
   localStorage.setItem('camiKatkiSayisi', katkiSayisi);
