@@ -1016,6 +1016,15 @@ getRedirectResult(auth).then(result => {
 
 onAuthStateChanged(auth, async user => {
   window.currentUser = user;
+  // UI'yi hemen güncelle — fonksiyon hazır olana kadar bekle
+  const updateUI = () => {
+    if (typeof authUIGuncelle === 'function') {
+      authUIGuncelle(user || null);
+    } else {
+      setTimeout(updateUI, 200);
+    }
+  };
+  updateUI();
   if (user) {
     window.dispatchEvent(new CustomEvent('mihrab-auth', { detail: { user } }));
     console.log('✅ Firebase Auth:', user.isAnonymous ? 'Anonim' : user.displayName);
@@ -6384,10 +6393,7 @@ function authUIGuncelle(user) {
   }
 }
 
-// Firebase auth hazır olunca UI güncelle
-window.addEventListener('mihrab-auth', e => {
-  authUIGuncelle(e.detail.user);
-});
+// Firebase auth hazır olunca UI güncelle (onAuthStateChanged ile yönetiliyor)
 
 // Ziyaret kaydetme — Firebase'e de gönder
 const _eskiZiyaretKaydet = window.ziyaretKaydetSafe;
