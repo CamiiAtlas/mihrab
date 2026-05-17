@@ -1357,7 +1357,7 @@ window.getUserId=getUserId;
      ════════════════════════════════════════════ -->
 
 <!-- ═══ AUTH BUTONU ═══ -->
-<button class="auth-btn" id="authBtn" onclick="authModalAcGuncelle()">
+<button class="auth-btn" id="authBtn" onclick="try{authModalAcGuncelle();}catch(e){console.error('authModal hata:',e);document.getElementById('authModal').classList.add('open');}">
   <div class="auth-avatar" id="authAvatar">👤</div>
   <span class="auth-name" id="authName">Giriş Yap</span>
 </button>
