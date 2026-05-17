@@ -1857,6 +1857,18 @@ window.getUserId=getUserId;
 <div class="toast" id="toast"></div>
 
 <script>
+// Güvenli analytics stub — Firebase yüklenmeden önce çağrılırsa hata vermez
+var analytics = {
+  log: function(event, params) {
+    try {
+      if (window._fbAnalytics && typeof window._fbAnalytics.log === 'function') {
+        window._fbAnalytics.log(event, params);
+      }
+    } catch(e) {}
+  }
+};
+window.analytics = analytics;
+
 // ============================================================
 // ÇOK DİL SİSTEMİ
 // ============================================================
@@ -6281,7 +6293,8 @@ function firebaseBaslat(config) {
   const firebaseAnalytics = getAnalytics(app);
   
   // Analytics stub'ı gerçeğiyle değiştir
-  analytics.log = (event, params) => logEvent(firebaseAnalytics, event, params);
+  analytics.log = (event, params) => { try { logEvent(firebaseAnalytics, event, params||{}); } catch(e) {} };
+window._fbAnalytics = { log: analytics.log };
   
   // FCM
   const messaging = getMessaging(app);
