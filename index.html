@@ -1357,7 +1357,7 @@ window.getUserId=getUserId;
      ════════════════════════════════════════════ -->
 
 <!-- ═══ AUTH BUTONU ═══ -->
-<button class="auth-btn" id="authBtn" onclick="try{authModalAcGuncelle();}catch(e){console.error('authModal hata:',e);document.getElementById('authModal').classList.add('open');}">
+<button class="auth-btn" id="authBtn" type="button">
   <div class="auth-avatar" id="authAvatar">👤</div>
   <span class="auth-name" id="authName">Giriş Yap</span>
 </button>
@@ -1857,6 +1857,22 @@ window.getUserId=getUserId;
 <div class="toast" id="toast"></div>
 
 <script>
+// authBtn click listener — Chrome araç çubuğu müdahalesini engeller
+document.addEventListener('DOMContentLoaded', function() {
+  var btn = document.getElementById('authBtn');
+  if (btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      try { authModalAcGuncelle(); } catch(err) {
+        console.error('authModal hata:', err);
+        var m = document.getElementById('authModal');
+        if (m) m.classList.add('open');
+      }
+    });
+  }
+});
+
 // Güvenli analytics stub — Firebase yüklenmeden önce çağrılırsa hata vermez
 var analytics = {
   log: function(event, params) {
